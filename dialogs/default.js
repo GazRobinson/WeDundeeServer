@@ -1,0 +1,3 @@
+const GetDialog = () => {
+    const dialogName = '/';
+}
