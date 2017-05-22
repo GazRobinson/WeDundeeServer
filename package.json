@@ -2,7 +2,7 @@
   "name": "WeDundee",
   "version": "1.0.0",
   "description": "A sample bot for getting started with Bot Framework",
-  "main": "WeDundeeBot.js",
+  "main": "server.js",
   "scripts": {
     "test": ""
   },
