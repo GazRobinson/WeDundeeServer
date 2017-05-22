@@ -4,15 +4,14 @@ called once at startup and then beginDialog() can be called everytime you
 wish to invoke the prompt.
 -----------------------------------------------------------------------------*/
 
+////CUSTOM CONFIRM
 var builder = require('botbuilder');
 exports.beginConfirmDialog = function (session, options) {
     console.log('Do Confirm');
     session.beginDialog('confirm', options || {});
 }
 
-exports.create = function (bot, recog) {
-    console.log('TOAST\n')
-    console.log(recog);
+exports.createConfirmDialog = function (bot, recog) {
     var prompt = new builder.IntentDialog({ recognizers: [recog] })
         .onBegin(function (session, args) {
             
@@ -33,6 +32,33 @@ exports.create = function (bot, recog) {
             session.send(getNonUnderstand());
         });
     bot.dialog('confirm', prompt);
+}
+
+
+//CUSTOM TEXT
+exports.beginTextDialog = function (session, options) {
+    console.log('Do Text');
+    session.beginDialog('text', options || {});
+}
+
+exports.createTextDialog = function (bot, recog) {
+    var prompt = new builder.IntentDialog({ recognizers: [recog] })
+        .onBegin(function (session, args) {
+            
+        })
+        .matches('intent.dontKnow', function (session) {
+            // Return 'false' to indicate they gave up
+            console.log('DONT KNOW');
+            session.endDialogWithResult({ text: "",
+            response: false});
+        })
+        .onDefault(function (session, args) {
+            // Validate users reply.
+            console.log('THIS IS THE DEFAULT');
+            session.endDialogWithResult({ text: session.message.text,
+            response: true});
+        });
+    bot.dialog('text', prompt);
 }
 
 const getNonUnderstand = () => {

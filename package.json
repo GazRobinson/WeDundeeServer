@@ -8,13 +8,12 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/fuselabs/echobot.git"
+    "url": "git+https://github.com/garethrobinson/WeDundeeServer.git"
   },
   "keywords": [
     "botframework"
   ],
-  "author": "Fuse Labs",
-  "license": "MIT",
+  "author": "Gaz",
   "bugs": {
     "url": "https://github.com/garethrobinson/WeDundeeServer"
   },
