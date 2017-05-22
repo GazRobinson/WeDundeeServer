@@ -1,10 +1,11 @@
 {
-  "name": "WeDundee",
+  "name": "wedundee",
   "version": "1.0.0",
   "description": "A sample bot for getting started with Bot Framework",
   "main": "server.js",
   "scripts": {
-    "test": ""
+    "test": "",
+    "start": "node server.js"
   },
   "repository": {
     "type": "git",
@@ -22,5 +23,8 @@
     "botbuilder": "^3.8.3",
     "recast": "^0.12.3",
     "restify": "^4.3.0"
-  }
+  },
+  "devDependencies": {},
+  "license": "ISC",
+  "file":["config.js", "intents", "dialogs"]
 }
