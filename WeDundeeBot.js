@@ -301,34 +301,3 @@ server.listen(3978)
 server.post('/api/messages', connector.listen())
 
 module.exports = sessionData
-
-// Event when Message received
-/*bot.dialog('/', [
-    function (session, args, next) {
-        if (!session.userData.name) {
-            session.beginDialog('/profile');
-        } else {
-            next();
-        }
-    },
-    function (session, results) {
-        session.send('Hello again %s!', session.userData.name);
-    }
-]*/
-	/*(session) => {
-  recastClient.analyseText(session.message.text)
-  .then(res => {const intent = res.intent()
-  	if(intent){
-  		session.userData.bacon = session.message.text
-  		var returnString = INTENTS[intent.slug]("LOLL")
-  		session.send(returnString)
-  	}*/
-	/*if(intent.slug == 'greetings'){
-		session.send(getGreetings())
-	} else{
-		session.send("I don't understand yet")
-	}*/
-  /*})
-  .catch(() => session.send('u wot m8?'))
-})*/
-//)	

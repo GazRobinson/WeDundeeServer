@@ -1,26 +1,20 @@
 const defaultDialog = require('./dialogs/default.js')
+var restify = require('restify');
+var builder = require('botbuilder');
 const config = require('./config.js')
-const restify = require('restify')
-const builder = require('botbuilder')
-var prompts = require('./dialogs/prompts.js');
 var greets = require('./intents/greetings.js');
+var prompts = require('./dialogs/prompts.js');
 
-const recast = require('recastai')
-const recastClient = new recast.request(config.recast, 'en')
 
-var messageCount = 0;
+// Get secrets from server environment
+var botConnectorOptions = { 
+    appId: config.appId, 
+    appPassword: config.appPassword
+};
 
-var sessionData = {
-	bacon : "This is a test"
-}
-
-// Connection to Microsoft Bot Framework
-const connector = new builder.ChatConnector({
-  appId: config.appId,
-  appPassword: config.appPassword,
-})
-
-const bot = new builder.UniversalBot(connector);
+// Create bot
+var connector = new builder.ChatConnector(botConnectorOptions);
+var bot = new builder.UniversalBot(connector);
 var intents = new builder.IntentDialog();
 
 //NLP
@@ -294,41 +288,12 @@ bot.dialog('/askMemory', [
 		}	
     }
 ]);
+// Setup Restify Server
+var server = restify.createServer();
 
-// Server Init
-const server = restify.createServer()
-server.listen(3978)
-server.post('/api/messages', connector.listen())
+// Handle Bot Framework messages
+server.post('/api/messages', connector.listen());
 
-module.exports = sessionData
-
-// Event when Message received
-/*bot.dialog('/', [
-    function (session, args, next) {
-        if (!session.userData.name) {
-            session.beginDialog('/profile');
-        } else {
-            next();
-        }
-    },
-    function (session, results) {
-        session.send('Hello again %s!', session.userData.name);
-    }
-]*/
-	/*(session) => {
-  recastClient.analyseText(session.message.text)
-  .then(res => {const intent = res.intent()
-  	if(intent){
-  		session.userData.bacon = session.message.text
-  		var returnString = INTENTS[intent.slug]("LOLL")
-  		session.send(returnString)
-  	}*/
-	/*if(intent.slug == 'greetings'){
-		session.send(getGreetings())
-	} else{
-		session.send("I don't understand yet")
-	}*/
-  /*})
-  .catch(() => session.send('u wot m8?'))
-})*/
-//)	
+server.listen(process.env.port || 3978, function () {
+    console.log('%s listening to %s', server.name, server.url); 
+});
