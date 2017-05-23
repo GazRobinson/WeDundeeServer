@@ -242,6 +242,21 @@ bot.dialog('ROOT', function (session) {
 		session.beginDialog('/');
 }).triggerAction({ matches: /^ROOT/ });
 
+// PICTURE
+bot.dialog('PICTURE', function (session) {
+	session.send("Trying to send a picture...");
+		session.send({
+            text: "Here!",
+            attachments: [
+                {
+                    contentType: "image/jpeg",
+                    contentUrl: "http://www.dundeepartnership.co.uk/sites/default/files/The%20Law_small%20%28crop%29.jpg",
+                    name: "Law"
+                }
+            ]
+        });
+}).triggerAction({ matches: /^PICTURE/ });
+
 //////END INTERRUPTS/////////
 
 
