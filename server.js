@@ -152,7 +152,7 @@ function callback(results) {
 bot.dialog('/show',
 	[
 		function (session, args) {
-
+			session.send("Hold on a second while I grab one for you...");
     	address = session.message.address;
 
 		var results = imageSearch('Dundee', callback, 0, 1);
