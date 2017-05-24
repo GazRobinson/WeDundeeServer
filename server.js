@@ -143,8 +143,7 @@ function callback(results) {
 		name: "Law"
 	});
 	bot.send(msg);
-	
-  //  bot.beginDialog(address, "/doShow", results[0].link, { resume: false });  
+	 
 
 }
 
@@ -154,15 +153,15 @@ bot.dialog('/show',
 		function (session, args) {
 			session.send("Hold on a second while I grab one for you...");
     	address = session.message.address;
-
-		var results = imageSearch('Dundee', callback, 0, 1);
+//setTimeout(function () { session.beginDialog('/smallTalk', ("Hi again " + session.userData.name)); }, 3000);
+			setTimeout(function () { var results = imageSearch('Dundee', callback, 0, 1); }, 2000);
 
 
 		}
 ]
 ).triggerAction({ matches: 'showMe' });
 
-bot.dialog('/doShow',
+/*bot.dialog('/doShow',
 	[
 		function (session, args) {
  
@@ -180,7 +179,7 @@ bot.dialog('/doShow',
 
 		}
 ]
-).triggerAction({ matches: 'showMe' });
+).triggerAction({ matches: 'showMe' });*/
 
 //BUSINESS
 bot.dialog('/business', [
