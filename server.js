@@ -1,11 +1,14 @@
+require('dotenv').config()
 const defaultDialog = require('./dialogs/default.js')
 var restify = require('restify');
 var builder = require('botbuilder');
 const config = require('./config.js')
 var greets = require('./intents/greetings.js');
 var prompts = require('./dialogs/prompts.js');
+var mysql = require('mysql');
+var imageSearch = require('node-google-image-search');
 
-
+console.log(process.env.CSE_ID);
 // Get secrets from server environment
 var botConnectorOptions = { 
     appId: config.appId, 
@@ -16,12 +19,24 @@ var botConnectorOptions = {
 var connector = new builder.ChatConnector(botConnectorOptions);
 var bot = new builder.UniversalBot(connector);
 var intents = new builder.IntentDialog();
+var address;
 
 //NLP
 var model = 'https://westus.api.cognitive.microsoft.com/luis/v2.0/apps/8fce766d-71b2-4dc6-9266-65a27c778841?subscription-key=d51418e801cc4453884758a0698e4a28&verbose=true&timezoneOffset=0&q='
 var recognizer = new builder.LuisRecognizer(model);
 bot.recognizer(recognizer);
 
+//SQL
+/*var con = mysql.createConnection({
+  host: config.sqlHost,
+  user: config.sqlUser,
+  password: config.sqlPword
+});
+
+con.connect(function(err) {
+  if (err) throw err;
+  console.log("Connected!");
+});*/
 
 //PROMPT CONSTRUCTORS
 // Create prompts
@@ -34,6 +49,7 @@ prompts.createTextDialog(bot, recognizer);
 bot.dialog('weather',
 	[
 		function (session, args) {
+			console.log(args.entities);
 			if (builder.EntityRecognizer.findEntity(args.entities, 'builtin.geography.city') != null) {
 				if (builder.EntityRecognizer.findEntity(args.entities, 'builtin.geography.city').entity != 'dundee') {
 					session.send("Why do you want to know about that place! :'(");
@@ -114,6 +130,57 @@ bot.dialog('/smallTalk', [
 		session.beginDialog(dialogs[Math.floor(Math.random() * dialogs.length)])
     }
 ]);
+
+//IMG RESULTS
+function callback(results) {
+	console.log(results);
+	var msg = new builder.Message().address(address);
+    msg.text('Hello, this is a notification');
+	msg.textLocale('en-US');
+	msg.addAttachment({
+		contentType: "image/jpeg",
+		contentUrl: results[0].link,
+		name: "Law"
+	});
+	bot.send(msg);
+	
+  //  bot.beginDialog(address, "/doShow", results[0].link, { resume: false });  
+
+}
+
+//ShowMe
+bot.dialog('/show',
+	[
+		function (session, args) {
+
+    	address = session.message.address;
+
+		var results = imageSearch('Dundee', callback, 0, 1);
+
+
+		}
+]
+).triggerAction({ matches: 'showMe' });
+
+bot.dialog('/doShow',
+	[
+		function (session, args) {
+ 
+	console.log("Do Show");
+		session.send({
+            text: "Here!",
+            attachments: [
+                {
+                    contentType: "image/jpeg",
+                    contentUrl: args,
+                    name: "Law"
+                }
+            ]
+        });
+
+		}
+]
+).triggerAction({ matches: 'showMe' });
 
 //BUSINESS
 bot.dialog('/business', [
@@ -226,7 +293,7 @@ bot.dialog('help', function (session) {
 // WeatherTest
 bot.dialog('weatherTest', function (session, args) {
 	var intent = args.intent;
-
+	session.send("YESSSSSSSS");
 		session.beginDialog('weather', intent);
 }).triggerAction({ matches: 'checkWeather' });
 

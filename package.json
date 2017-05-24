@@ -21,10 +21,18 @@
   "homepage": "https://github.com/garethrobinson/WeDundeeServer",
   "dependencies": {
     "botbuilder": "^3.8.3",
+    "dotenv": "^4.0.0",
+    "google-images": "^2.1.0",
+    "mysql": "^2.13.0",
+    "node-google-image-search": "^1.0.3",
     "recast": "^0.12.3",
     "restify": "^4.3.0"
   },
   "devDependencies": {},
   "license": "ISC",
-  "file":["config.js", "intents", "dialogs"]
+  "file": [
+    "config.js",
+    "intents",
+    "dialogs"
+  ]
 }
