@@ -79,7 +79,7 @@ bot.on('conversationUpdate', function (message) {
 			} else {
 				session.send("Hello there, it's so nice to see your face");
 				// Retrieve weather information from coordinates (Sydney, Australia) 
-				forecast.get([56.4620, 2.9707], function(err, weather) {
+				forecast.get([56.4620, -3.1069149], function(err, weather) {
 					if (err) return console.dir(err);
 					currentForecast = weather;	
 					console.dir(weather);
