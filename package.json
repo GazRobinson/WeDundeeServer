@@ -22,6 +22,7 @@
   "dependencies": {
     "botbuilder": "^3.8.3",
     "dotenv": "^4.0.0",
+    "forecast": "^0.3.2",
     "google-images": "^2.1.0",
     "mysql": "^2.13.0",
     "node-google-image-search": "^1.0.3",

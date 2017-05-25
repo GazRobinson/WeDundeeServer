@@ -8,6 +8,7 @@ var prompts = require('./dialogs/prompts.js');
 var mysql = require('mysql');
 var imageSearch = require('node-google-image-search');
 var wordpress = require('wordpress');
+var Forecast = require('forecast');
 
 console.log(process.env.CSE_ID);
 // Get secrets from server environment
@@ -16,6 +17,17 @@ var botConnectorOptions = {
     appPassword: config.appPassword
 };
 
+//FORECAST
+var forecast = new Forecast({
+	service: 'darksky',
+  key: 'de4d2a752ffd21ca78d2394339e4a01d',
+  units: 'celcius',
+  cache: true,      // Cache API requests 
+  ttl: {            // How long to cache requests. Uses syntax from moment.js: http://momentjs.com/docs/#/durations/creating/ 
+    minutes: 27,
+    seconds: 45
+  }
+})
 //WORDPRESS
 var wpClient = wordpress.createClient({
     url: "http://www.devmode.wedundee.com",
@@ -66,6 +78,12 @@ bot.on('conversationUpdate', function (message) {
 					.text("Hello " + session.userData.name + ", it's so nice to see your face again."));
 			} else {
 				session.send("Hello there, it's so nice to see your face");
+				// Retrieve weather information from coordinates (Sydney, Australia) 
+				forecast.get([56.4620, 2.9707], function(err, weather) {
+				if(err) return console.dir(err);
+				console.dir(weather);
+				session.send(weather.hourly.summary);	
+				});
 			}
 		});
 	}
@@ -314,10 +332,6 @@ bot.dialog('/location',
 ]
 );
 
-//TEST
-bot.dialog('fart', function (session, args) {
-    session.send("FART");
-});
 
 ////////END DIALOGS///////
 
