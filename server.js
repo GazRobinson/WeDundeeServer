@@ -155,8 +155,8 @@ bot.dialog('/smallTalk', [
 		const dialogs = [
 			'/location',
 		//	'/userWeather',
-			//'/askUserAQuestion',
-		//	'/genericQuestion'
+			'/askUserAQuestion',
+			'/genericQuestion'
 		]
 		session.beginDialog(dialogs[Math.floor(Math.random() * dialogs.length)])
     }
@@ -166,7 +166,7 @@ bot.dialog('/smallTalk', [
 function callback(results) {
 	console.log(results);
 	var msg = new builder.Message().address(address);
-    msg.text('Hello, this is a notification');
+    msg.text('Here you go!');
 	msg.textLocale('en-US');
 	msg.addAttachment({
 		contentType: "image/jpeg",
@@ -319,7 +319,6 @@ bot.dialog('help', function (session) {
 // WeatherTest
 bot.dialog('weatherTest', function (session, args) {
 	var intent = args.intent;
-	session.send("YESSSSSSSS");
 		session.beginDialog('weather', intent);
 }).triggerAction({ matches: 'checkWeather' });
 
