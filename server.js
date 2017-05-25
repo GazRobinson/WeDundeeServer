@@ -10,7 +10,6 @@ var imageSearch = require('node-google-image-search');
 var wordpress = require('wordpress');
 var Forecast = require('forecast');
 
-console.log(process.env.CSE_ID);
 // Get secrets from server environment
 var botConnectorOptions = { 
     appId: config.appId, 
@@ -28,6 +27,7 @@ var forecast = new Forecast({
     seconds: 45
   }
 })
+var currentForecast;
 //WORDPRESS
 var wpClient = wordpress.createClient({
     url: "http://www.devmode.wedundee.com",
@@ -80,16 +80,19 @@ bot.on('conversationUpdate', function (message) {
 				session.send("Hello there, it's so nice to see your face");
 				// Retrieve weather information from coordinates (Sydney, Australia) 
 				forecast.get([56.4620, 2.9707], function(err, weather) {
-				if(err) return console.dir(err);
-				console.dir(weather);
-				session.send(weather.hourly.summary);	
+					if (err) return console.dir(err);
+					currentForecast = weather;	
+					console.dir(weather);
+					session.send(weather.hourly.summary);	
 				});
 			}
 		});
 	}
 });
 
-
+function getWeather() {
+	return "It's " + currentForecast.currently.summary + " with a temperature of " + currentForecast.currently.temperature + " degrees!";
+}
 //WEATHER
 bot.dialog('weather',
 	[
@@ -100,12 +103,12 @@ bot.dialog('weather',
 					session.send("Why do you want to know about that place! :'(");
 					session.endDialog();
 				} else {
-					session.send("What a nice day it is again, isn't it?");
+					session.send(getWeather());
 					prompts.beginConfirmDialog(session);
 				}
 			} else
 			{
-				session.send("What a nice day it is again, isn't it?");
+				session.send(getWeather());
 					prompts.beginConfirmDialog(session);
 			}	
 		},
