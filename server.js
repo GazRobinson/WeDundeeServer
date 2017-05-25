@@ -106,6 +106,12 @@ bot.dialog('weather',
 
 bot.dialog('/', function (session, args, next) {
 	console.log("This is the ROOT");
+	if (!session.userData.name) {
+		session.send("We don't even know each other yet!");
+		setTimeout(function () { session.beginDialog('/intro'); }, 3000);
+	} else {
+		session.beginDialog("/smallTalk");
+	}
 });
 
 //Greeting
