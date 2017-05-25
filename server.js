@@ -181,10 +181,14 @@ function callback(results) {
 		name: "Law"
 	});
 	bot.send(msg);
-	 
+	setTimeout(function () { bot.beginDialog("/here"); }, 2500);
 
 }
-
+bot.dialog('/here', [
+	function (session, args) {
+		session.send("Here");
+	}
+]);
 //ShowMe
 bot.dialog('/show',
 	[
