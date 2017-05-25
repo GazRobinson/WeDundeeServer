@@ -124,6 +124,7 @@ bot.dialog('/greeting', function (session, args, next) {
 			//session.sendTyping();
 			
 			setTimeout(function () { session.beginDialog('/smallTalk'); }, 3000);
+			session.endDialog();
         }
     }
 ).triggerAction({ matches: 'greeting' });
@@ -251,9 +252,12 @@ bot.dialog('/askUserAQuestion', [
 	},
 	function (session, args) {
 		if (args.response) {
+			
 			session.send(greets.getPositiveResponse() + "! Okay, let's see here...");
-			session.send(greets.getBackendQuestion());
-			prompts.beginTextDialog(session);
+			setTimeout(function () {
+				session.send(greets.getBackendQuestion());
+				prompts.beginTextDialog(session);
+			}, 3000);
 		} else {
 			session.send(greets.getUnsureResponse());
 		}	
@@ -376,15 +380,25 @@ bot.dialog('/answerQuestion', [
     function (session, args) {
 		builder.Prompts.confirm(session, 'Can you answer a question about Dundee for me?');
     },
-	function (session, results) {
-		if (results.response) {
-			session.send("Okay! Let's see... The question is:");
-			builder.Prompts.text(session, 'Who loves orange soda?');
-		}
-		else {
-			session.endDialog();
+	function (session, args) {
+		if (args.response) {
+			session.send(greets.getPositiveResponse() + "! Okay, let's see here...");
+			setTimeout(function () {
+				session.send(greets.getBackendQuestion());
+				prompts.beginTextDialog(session);
+			}, 3000);
+		} else {
+			session.send(greets.getUnsureResponse());
 		}	
-    }
+	},
+	function (session, args) {
+		console.log(args.text);
+		if (args.response) {
+			session.send(greets.getQuestionResponse());
+		} else {
+			session.send(greets.getUnsureResponse());
+		}	
+	}
 ]);
 
 bot.dialog('/askMemory', [
