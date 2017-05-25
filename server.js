@@ -42,7 +42,7 @@ var intents = new builder.IntentDialog();
 var address;
 
 //NLP
-var model = 'https://westus.api.cognitive.microsoft.com/luis/v2.0/apps/8fce766d-71b2-4dc6-9266-65a27c778841?subscription-key=d51418e801cc4453884758a0698e4a28&verbose=true&timezoneOffset=0&q='
+var model = 'https://eastus2.api.cognitive.microsoft.com/luis/v2.0/apps/8fce766d-71b2-4dc6-9266-65a27c778841?subscription-key=3e3add150f3a4f9c870d810b653bfd30&timezoneOffset=0&verbose=true&q='
 var recognizer = new builder.LuisRecognizer(model);
 bot.recognizer(recognizer);
 
