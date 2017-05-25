@@ -7,6 +7,7 @@ var greets = require('./intents/greetings.js');
 var prompts = require('./dialogs/prompts.js');
 var mysql = require('mysql');
 var imageSearch = require('node-google-image-search');
+var wordpress = require('wordpress');
 
 console.log(process.env.CSE_ID);
 // Get secrets from server environment
@@ -14,6 +15,13 @@ var botConnectorOptions = {
     appId: config.appId, 
     appPassword: config.appPassword
 };
+
+//WORDPRESS
+var wpClient = wordpress.createClient({
+    url: "http://www.devmode.wedundee.com",
+    username: "Gaz",
+    password: "Z8n-ScW-akq-Jww"
+});
 
 // Create bot
 var connector = new builder.ChatConnector(botConnectorOptions);
@@ -45,6 +53,25 @@ prompts.createTextDialog(bot, recognizer);
 
 /////////DIALOGS/////////
 /////
+bot.on('conversationUpdate', function (message) {
+	console.log(message.address);
+	if (message.membersAdded[0].name=="WeDundee") {
+		address = message.address;
+		bot.loadSession(message.address, function (err, session) {
+			if (err)
+				console.log("ERR: " + err);	
+			if (session.userData.name) {
+				bot.send(new builder.Message()
+					.address(address)
+					.text("Hello " + session.userData.name + ", it's so nice to see your face again."));
+			} else {
+				session.send("Hello there, it's so nice to see your face");
+			}
+		});
+	}
+});
+
+
 //WEATHER
 bot.dialog('weather',
 	[
@@ -77,7 +104,9 @@ bot.dialog('weather',
 	]
 );
 
-bot.dialog('/', intents);
+bot.dialog('/', function (session, args, next) {
+	console.log("This is the ROOT");
+});
 
 //Greeting
 bot.dialog('/greeting', function (session, args, next) {
@@ -85,9 +114,10 @@ bot.dialog('/greeting', function (session, args, next) {
 			session.beginDialog('/intro', 'Hi there!');
 			
         } else {
+			session.send("Hi again " + session.userData.name);
+			//session.sendTyping();
 			
-			session.sendTyping();
-			setTimeout(function () { session.beginDialog('/smallTalk', ("Hi again " + session.userData.name)); }, 3000);
+			setTimeout(function () { session.beginDialog('/smallTalk'); }, 3000);
         }
     }
 ).triggerAction({ matches: 'greeting' });
@@ -101,7 +131,7 @@ bot.dialog('/intro',
 		},
 		function (session, results) {
 			session.send('Hello %s, nice to meet you!', session.userData.name);
-		session.beginDialog('/smallTalk');
+			setTimeout(function () { session.beginDialog('/smallTalk'); }, 3000);
     }
 ]
 ).triggerAction({ matches: 'greeting' });
@@ -109,7 +139,7 @@ bot.dialog('/intro',
 //PROFILE
 bot.dialog('/profile', [
     function (session, args) {
-		builder.Prompts.text(session, (args ? (args +" ") : ("") )+ 'What is your name?');
+		builder.Prompts.text(session, 'What is your name?');
     },
     function (session, results) {
 		session.userData.name = results.response;
@@ -120,12 +150,13 @@ bot.dialog('/profile', [
 //SMALLTALK
 bot.dialog('/smallTalk', [
 	function (session, args) {
-		session.send(args);
+		//console.log(session.message.address);
+		
 		const dialogs = [
-		//	'/location',
-			'/userWeather',
-			'/askUserAQuestion',
-			'/genericQuestion'
+			'/location',
+		//	'/userWeather',
+			//'/askUserAQuestion',
+		//	'/genericQuestion'
 		]
 		session.beginDialog(dialogs[Math.floor(Math.random() * dialogs.length)])
     }
@@ -151,45 +182,35 @@ function callback(results) {
 bot.dialog('/show',
 	[
 		function (session, args) {
+
+    		address = session.message.address;
+
+				console.log(args.intent);
+				if (args.intent.entities != null) {
+					console.log(builder.EntityRecognizer.findEntity(args.intent.entities, 'botThing'));
+				console.log(args.intent.entities[0].resolution);
+				if (builder.EntityRecognizer.findEntity(args.intent.entities, 'botThing').resolution.values[0] == "thought") {
+				
+					session.send("Here's something someone wanted to see in the city...");
+					console.log("Getting thought");
+					wpClient.getPosts({post_type: 'thoughts', number:1, offset:Math.floor(Math.random() * 1000)},function (error, posts) {
+					if (error) console.log(error);
+					console.log("Found " + posts.length + " posts!");
+					if (posts.length > 0) {
+						console.log(posts[0]);
+						setTimeout(function () { session.send( '"' + posts[0].content + '"') }, 3000);
+					}
+						
+				});
+				} else if (builder.EntityRecognizer.findEntity(args.intent.entities, 'botThing').resolution.values[0] == "picture") {
+				console.log("Getting picture");	
 			session.send("Hold on a second while I grab one for you...");
-    	address = session.message.address;
-//setTimeout(function () { session.beginDialog('/smallTalk', ("Hi again " + session.userData.name)); }, 3000);
-			setTimeout(function () { var results = imageSearch('Dundee', callback, 0, 1); }, 2000);
-
-
+					setTimeout(function () { var results = imageSearch('Dundee', callback, 0, 1); }, 3000);	
+				}
+			}
 		}
 ]
 ).triggerAction({ matches: 'showMe' });
-
-/*bot.dialog('/doShow',
-	[
-		function (session, args) {
- 
-	console.log("Do Show");
-		session.send({
-            text: "Here!",
-            attachments: [
-                {
-                    contentType: "image/jpeg",
-                    contentUrl: args,
-                    name: "Law"
-                }
-            ]
-        });
-
-		}
-]
-).triggerAction({ matches: 'showMe' });*/
-
-//BUSINESS
-bot.dialog('/business', [
-	function (session, args) {
-		const dialogs = [
-			'/askUserAQuestion'
-		]
-		session.beginDialog(dialogs[Math.floor(Math.random() * dialogs.length)])
-    }
-]).triggerAction({ matches: /^BUSINESS/i });
 
 //UserWeather
 bot.dialog('/userWeather', [
@@ -206,9 +227,9 @@ bot.dialog('/genericQuestion', [
 			
 	},
 	function (session, args) {
-		console.log(args.text);
+		console.log("Response: " + args.text);
 		if (args.text) {
-			session.send(greets.getQuestionResponse);
+			session.send(greets.getQuestionResponse());
 		} else {
 			session.send(greets.getUnsureResponse());
 		}	
@@ -245,8 +266,14 @@ bot.dialog('/askUserAQuestion', [
 bot.dialog('/location',
 	[
 		function (session, args) {
-			session.send("So... Are you a native Dundonian?");
-			prompts.beginConfirmDialog(session);
+			if (session.userData.dundonian) {
+				console.log("Skipping location");
+				session.endDialog();
+				session.beginDialog('/genericQuestion');
+			} else {
+				session.send("So... Are you a native Dundonian?");
+				prompts.beginConfirmDialog(session);
+			}	
 		},
 		function (session, results) {
 			session.userData.dundonian = results.response;
