@@ -1,0 +1,15 @@
+﻿<Properties>
+  <MonoDevelop.Ide.Workbench ActiveDocument="server.js">
+    <Files>
+      <File FileName="server.js" Line="161" Column="72" />
+      <File FileName="config.js" Line="9" Column="23" />
+      <File FileName="intents/greetings.js" Line="54" Column="42" />
+    </Files>
+  </MonoDevelop.Ide.Workbench>
+  <MonoDevelop.Ide.Workspace />
+  <MonoDevelop.Ide.DebuggingService.Breakpoints>
+    <BreakpointStore />
+  </MonoDevelop.Ide.DebuggingService.Breakpoints>
+  <MonoDevelop.Ide.DebuggingService.PinnedWatches />
+  <MultiItemStartupConfigurations />
+</Properties>

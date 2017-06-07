@@ -9,6 +9,14 @@ var mysql = require('mysql');
 var imageSearch = require('node-google-image-search');
 var wordpress = require('wordpress');
 var Forecast = require('forecast');
+var admin = require("firebase-admin");
+
+var serviceAccount = require("./wedundeebot-firebase-adminsdk-ibkp7-c6ba8d1dd7.json");
+
+admin.initializeApp({
+  credential: admin.credential.cert(serviceAccount),
+  databaseURL: "https://wedundeebot.firebaseio.com"
+});
 
 // Get secrets from server environment
 var botConnectorOptions = { 
@@ -16,6 +24,79 @@ var botConnectorOptions = {
     appPassword: config.appPassword
 };
 
+// Get a database reference to our blog
+var db = admin.database();
+var ref = db.ref("server/saving-data/questions");
+
+
+var usersRef = ref;
+var naaaame = "Cool guy";
+/*
+usersRef.child(userData.name).set({
+  date_of_birth: "June 23, 1912",
+  full_name: "Alan Turing"
+});*/
+
+function SaveQuestion(name, question){
+	/*usersRef.child(name + Math.floor(Math.random() * 1000)).set({
+	    from: name,
+		question: question,
+		answers: ["Answer A", "Anser B"]
+	});*/
+    var newPostRef = usersRef.push();
+    newPostRef.set( {
+        from: name,
+        question: question,
+        answered: false,
+        checked: false//,
+        //answers: ["Answer A", "Anser B"]
+    });
+};
+
+function GetBackendQuestion(callback){
+    ref.on("value", function(snapshot) {
+		console.log(snapshot.val());
+		ref.off("value");
+		console.log("Butts");
+
+
+	    var obj_keys = Object.keys(snapshot.val());
+        var ran_key = obj_keys[Math.floor(Math.random() *obj_keys.length)];
+        var selectedquestion = snapshot.val()[ran_key];
+        currentQuestionID = ran_key;
+        currentQuestion = selectedquestion;
+		console.log(selectedquestion);
+        callback(currentQuestion);
+        //AnswerQuestion(ran_key, selectedquestion.answers, ["New Answer A", "New Answer B"]);
+    }, function (errorObject) {
+      console.log("The read failed: " + errorObject.code);
+      ref.off("value");
+    });
+    //ref.off("value", originalCallback);
+};
+
+function AnswerQuestion(id, currentAnswers, newAnswers){
+	var keyyyy = id+"/answers";
+	var obb = {};
+	var arr = newAnswers;
+	if(currentAnswers != null){
+	arr = currentAnswers.concat(newAnswers);
+	}
+	obb[keyyyy] = arr;
+	usersRef.update(obb
+	);
+	/*var newPostRef = usersRef.child(id).push();
+	newPostRef.set( {
+	        from: name,
+	        question: question,
+	        answered: false,
+	        checked: false//,
+	        //answers: ["Answer A", "Anser B"]
+	    });*/
+}
+
+//SaveQuestion("Gasfdfsdz", "Where's a gsdsdfood coffee shop in Dundee2?");
+//GetBackendQuestion();
 //FORECAST
 var forecast = new Forecast({
 	service: 'darksky',
@@ -77,14 +158,14 @@ bot.on('conversationUpdate', function (message) {
 					.address(address)
 					.text("Hello " + session.userData.name + ", it's so nice to see your face again."));
 			} else {
-				session.send("Hello there, it's so nice to see your face");
+				session.send("Hello, welcome to WeDundee. What can I help you with?");
 				// Retrieve weather information from coordinates (Sydney, Australia) 
-				forecast.get([56.4620, -3.1069149], function(err, weather) {
+			/*	forecast.get([56.4620, -3.1069149], function(err, weather) {
 					if (err) return console.dir(err);
 					currentForecast = weather;	
 					console.dir(weather);
 					session.send(weather.hourly.summary);	
-				});
+				});*/
 			}
 		});
 	}
@@ -280,7 +361,8 @@ bot.dialog('/askUserAQuestion', [
 			
 			session.send(greets.getPositiveResponse() + "! Okay, let's see here...");
 			setTimeout(function () {
-				session.send(greets.getBackendQuestion());
+            GetBackendQuestion(function(quest){session.send(quest);});
+				
 				prompts.beginTextDialog(session);
 			}, 3000);
 		} else {
@@ -405,7 +487,7 @@ bot.dialog('/answerQuestion', [
 		if (args.response) {
 			session.send(greets.getPositiveResponse() + "! Okay, let's see here...");
 			setTimeout(function () {
-				session.send(greets.getBackendQuestion());
+            GetBackendQuestion(function(quest){session.send(quest.question);});
 				prompts.beginTextDialog(session);
 			}, 3000);
 		} else {
@@ -415,13 +497,15 @@ bot.dialog('/answerQuestion', [
 	function (session, args) {
 		console.log(args.text);
 		if (args.response) {
+        AnswerQuestion(currentQuestionID, currentQuestion.currentAnswers, [args.text]);
 			session.send(greets.getQuestionResponse());
 		} else {
 			session.send(greets.getUnsureResponse());
 		}	
 	}
-]);
-
+]).triggerAction({ matches: /^ANSWER/ });
+var currentQuestionID;
+var currentQuestion;
 bot.dialog('/askMemory', [
     function (session, args) {
 		session.send("Do you have any fond memories of Dundee?");
