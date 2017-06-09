@@ -49,7 +49,7 @@ bot.dialog('/population',
         },
         function (session, args, next) {
             if (args.response == 1) {
-                session.send('2,478/km2 or as I prefer 6,420/mi2, this might not be much if you compare it to x but it’s the second highest in Scotland.');
+                session.send('2,478/km2 or as I prefer 6,420/mi2, this might not be much if you compare it to Tokyo but it’s the second highest in Scotland.');
             } else if(args.response == 0 || args.response == 2){
                 session.send("Ok then, I thought it was interesting!");                
             }  
