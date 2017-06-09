@@ -41,7 +41,7 @@ bot.dialog('/population',
 	[
 		function (session, args, next) {
             session.send('There are 148,270 people in Dundee city currently, I have only met a few of of them - but there is plenty time.');
-            setTimeout(next, 5000);
+            setTimeout(next, 10000);
         }, 
         function (session, args, next) {            
             session.send('Would you like to know the population density?');
