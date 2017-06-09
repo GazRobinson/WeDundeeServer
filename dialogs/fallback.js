@@ -62,7 +62,7 @@ module.exports.init = function () {
 
     bot.dialog('/fallback/music', [
         function (session, args) {
-            session.send(args + 'How about we listen to some music in the mean time?');
+            session.send(args + ' How about we listen to some music in the mean time?');
 			prompts.beginConfirmDialog(session, {skip:false});
         },
         function (session, args) {
@@ -85,6 +85,21 @@ module.exports.init = function () {
                 session.beginDialog('/answerQuestion');
             } else {
                 session.send("Never mind, maybe later!");
+                session.endDialog();
+            }    
+        }
+    ]);
+
+    bot.dialog('/fallback/question', [
+        function (session, args) {
+            session.send(args + ' Maybe you have an obscure question for someone about the city?');
+			prompts.beginConfirmDialog(session, {skip:false});
+        },
+        function (session, args) {
+            if (args.response == 1) {
+                session.beginDialog('/askQuestion');
+            } else {
+                session.send("Oh well.");
                 session.endDialog();
             }    
         }
