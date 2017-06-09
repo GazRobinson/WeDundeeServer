@@ -34,6 +34,10 @@ exports.createConfirmDialog = function (bot, recog) {
             console.log(args);
             session.endDialogWithResult({ response: 0 });
         })
+        .matches('intent.dontKnow', function (session, args) {
+            console.log(args);
+            session.endDialogWithResult({ response: 2 });
+        })
         .onDefault(function (session, args) {
             console.log(args);
             if (allowSkip) {

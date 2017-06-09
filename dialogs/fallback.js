@@ -28,13 +28,13 @@ module.exports.init = function () {
     bot.dialog('/fallback/picture', [
         function (session, args) {
             session.send(args + " Maybe you'd like to see a picture of Dundee instead?");
-			prompts.beginConfirmDialog(session, {skip:false});
+			prompts.beginConfirmDialog(session, {skip:true});
         },
         function (session, args) {
             console.log("We got here at least");
             if (args.response == 1) {
                 session.beginDialog('/showPicture');
-            } else {
+            } else if(args.response == 0 || args.response == 2){
                 session.send("Ok then, maybe another time!");
                 session.endDialog();
             }    
@@ -48,12 +48,12 @@ module.exports.init = function () {
     bot.dialog('/fallback/thought', [
         function (session, args) {
             session.send(args + ' Perhaps you could hear a thought from the city?');
-			prompts.beginConfirmDialog(session, {skip:false});
+			prompts.beginConfirmDialog(session, {skip:true});
         },
         function (session, args) {
             if (args.response == 1) {
                 session.beginDialog('/displayThought');
-            } else {
+            } else if(args.response == 0 || args.response == 2) {
                 session.send("Well, just ask if you change your mind!");
                 session.endDialog();
             }    
@@ -63,12 +63,12 @@ module.exports.init = function () {
     bot.dialog('/fallback/music', [
         function (session, args) {
             session.send(args + ' How about we listen to some music in the mean time?');
-			prompts.beginConfirmDialog(session, {skip:false});
+			prompts.beginConfirmDialog(session, {skip:true});
         },
         function (session, args) {
             if (args.response == 1) {
                 session.beginDialog('/playMusic');
-            } else {
+            } else if(args.response == 0 || args.response == 2) {
                 session.send("Perhaps later!");
                 session.endDialog();
             }    
@@ -78,12 +78,12 @@ module.exports.init = function () {
     bot.dialog('/fallback/answer', [
         function (session, args) {
             session.send(args + ' What if you answer a question about the city for me?');
-			prompts.beginConfirmDialog(session, {skip:false});
+			prompts.beginConfirmDialog(session, {skip:true});
         },
         function (session, args) {
             if (args.response == 1) {
                 session.beginDialog('/answerQuestion');
-            } else {
+            } else if(args.response == 0 || args.response == 2) {
                 session.send("Never mind, maybe later!");
                 session.endDialog();
             }    
@@ -93,12 +93,12 @@ module.exports.init = function () {
     bot.dialog('/fallback/question', [
         function (session, args) {
             session.send(args + ' Maybe you have an obscure question for someone about the city?');
-			prompts.beginConfirmDialog(session, {skip:false});
+			prompts.beginConfirmDialog(session, {skip:true});
         },
         function (session, args) {
             if (args.response == 1) {
                 session.beginDialog('/askQuestion');
-            } else {
+            } else if(args.response == 0 || args.response == 2 ) {
                 session.send("Oh well.");
                 session.endDialog();
             }    
