@@ -39,8 +39,21 @@ bot.dialog('/thanks',
 
 bot.dialog('/population',
 	[
-		function (session, args) {
+		function (session, args, next) {
             session.send('There are 148,270 people in Dundee city currently, I have only met a few of of them - but there is plenty time.');
+            setTimeout(next, 5000);
+        }, 
+        function (session, args, next) {            
+            session.send('Would you like to know the population density?');
+			prompts.beginConfirmDialog(session, {skip:true});
+        },
+        function (session, args, next) {
+            if (args.response == 1) {
+                session.send('2,478/km2 or as I prefer 6,420/mi2, this might not be much if you compare it to x but it’s the second highest in Scotland.');
+            } else if(args.response == 0 || args.response == 2){
+                session.send("Ok then, I thought it was interesting!");                
+            }  
+            session.endDialog();
 		}
 ]
 ).triggerAction({ matches: 'question.population' });      
