@@ -8,28 +8,40 @@ wish to invoke the prompt.
 var builder = require('botbuilder');
 exports.beginConfirmDialog = function (session, options) {
     console.log('Do Confirm');
+    global.stopTimer();
     session.beginDialog('confirm', options || {});
 }
 
 exports.createConfirmDialog = function (bot, recog) {
+    var allowSkip = false;
+    var unsureResponse;
     var prompt = new builder.IntentDialog({ recognizers: [recog] })
         .onBegin(function (session, args) {
-            
+            console.log("HERE?");
+            global.session = session;
+            console.log(session.dialogStack());
+            unsureResponse = args.unsureResponse || getNonUnderstand();
+            allowSkip = false;
+            if (args) {
+                allowSkip = args.skip;
+            }    
         })
-        .matches('positiveResponse', function (session) {
-            // Return 'false' to indicate they gave up
-            console.log('AYE');
-            session.endDialogWithResult({ response: true });
+        .matches('positiveResponse', function (session, args) {
+            console.log(args);
+            session.endDialogWithResult({ response: 1 });
         })
-        .matches('negativeResponse', function (session) {
-            // Return 'false' to indicate they gave up
-            console.log('noperino');
-            session.endDialogWithResult({ response: false });
+        .matches('negativeResponse', function (session, args) {
+            console.log(args);
+            session.endDialogWithResult({ response: 0 });
         })
         .onDefault(function (session, args) {
             console.log(args);
-            // Validate users reply.
-            session.send(getNonUnderstand());
+            if (allowSkip) {
+                console.log("Allow skip");
+                session.endDialogWithResult({ response: -1 });
+            } else {
+                session.send(unsureResponse);
+            }    
         });
     bot.dialog('confirm', prompt);
 }
@@ -42,9 +54,10 @@ exports.beginTextDialog = function (session, options) {
 }
 
 exports.createTextDialog = function (bot, recog) {
+    var botResponse;
     var prompt = new builder.IntentDialog({ recognizers: [recog] })
         .onBegin(function (session, args) {
-            
+            botResponse = args;
         })
         .matches('intent.dontKnow', function (session) {
             // Return 'false' to indicate they gave up
@@ -56,7 +69,7 @@ exports.createTextDialog = function (bot, recog) {
             // Validate users reply.
             console.log('THIS IS THE DEFAULT');
             session.endDialogWithResult({ text: session.message.text,
-            response: true});
+            response: true, botResponse: botResponse});
         });
     bot.dialog('text', prompt);
 }

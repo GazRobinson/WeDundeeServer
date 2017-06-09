@@ -5,7 +5,11 @@ exports.getGreetings = () => {
 	const answers = [
 	'Hello',
 	'Bonjour',
-	'Hi',]
+		'Hey',
+		'Hiya :)',
+		'Yo',
+		'Hello',
+	'Hello!']
 	return answers[Math.floor(Math.random() * answers.length)]
 }
 
@@ -58,10 +62,9 @@ exports.getBackendQuestion = () => {
 
 exports.getQuestionResponse = () => {
 	const answers = [
-		"Good answer!",
-		"Thanks :)",
-		"Oh! That's as good one!",
-		"Wow! I wouldn't have expected that!"
+		"I'll be sure to let the world know",
+		"Thanks :)  I'll remember this for the future!",
+		"Oh! That's as good one!"
 	]
 	return answers[Math.floor(Math.random() * answers.length)]
 }
