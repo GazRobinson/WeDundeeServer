@@ -1,3 +1,15 @@
+const thanks = [
+    "You're welcome!",
+    "No problem!",
+    "Any time.",
+    "Just doing my job!",
+    "You're too kind"
+];
+
+getRandomThanks = function () {    
+    return thanks[Math.floor(Math.random() * thanks.length)];
+}
+
 module.exports = function () {
     bot.dialog('/stopMusic',
 	[
@@ -15,5 +27,13 @@ module.exports = function () {
 			//audio/mpeg3
 		}
 ]
-).triggerAction({ matches: /^Stop Music/i });
+    ).triggerAction({ matches: /^Stop Music/i });
+
+bot.dialog('/thanks',
+	[
+		function (session, args) {
+            session.send(getRandomThanks());
+		}
+]
+).triggerAction({ matches: 'gratitude' });    
 }
