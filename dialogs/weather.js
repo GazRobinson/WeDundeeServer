@@ -37,23 +37,13 @@ module.exports = function () {
                         session.endDialog();
                     } else {
                         session.send(getWeather());
-                        prompts.beginConfirmDialog(session);
+                       // prompts.beginConfirmDialog(session);
                     }
                 } else {
                     session.send(getWeather());
-                    prompts.beginConfirmDialog(session);
+                   // prompts.beginConfirmDialog(session);
                 }
-            },
-            function (session, args) {
-                if (args.response == true) {
-                    session.send("I knew it!");
-				
-                } else if (args.response == false) {
-                    session.send("Doh!");
-                } else {
-                    session.send(prompts.getApology());
-                }
-            },
+            }
         ]
     );
 
