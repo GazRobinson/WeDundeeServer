@@ -76,9 +76,7 @@ exports.createTextDialog = function (bot, recog) {
 
 const getNonUnderstand = () => {
 	const answers = [
-	'Sorry?',
-	"I didn't get that",
-	'What was that?',]
+	"Please use some sort of 'yes' or 'no' for this one. I'm still getting used to everything.",]
 	return answers[Math.floor(Math.random() * answers.length)]
 }
 exports.getApology = () => {

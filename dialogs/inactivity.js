@@ -78,4 +78,19 @@ module.exports.init = function () {
             }    
         }
     ]).triggerAction({ matches: /^ANSWERQ/ });
+
+    bot.dialog('/inactive/question', [
+        function (session, args) {
+            session.send("Do you have an obscure question about Dundee you'd like someone to answer?");
+			prompts.beginConfirmDialog(session, {skip:false});
+        },
+        function (session, args) {
+            if (args.response == 1) {
+                session.beginDialog('/askQuestion');
+            } else {
+                session.send("Oh well...");
+                session.endDialog();
+            }    
+        }
+    ]).triggerAction({ matches: /^QUESTION/ });
 }

@@ -63,8 +63,7 @@ exports.getBackendQuestion = () => {
 exports.getQuestionResponse = () => {
 	const answers = [
 		"I'll be sure to let the world know",
-		"Thanks :)  I'll remember this for the future!",
-		"Oh! That's as good one!"
+		"Thanks :)  I'll remember this for the future!"
 	]
 	return answers[Math.floor(Math.random() * answers.length)]
 }

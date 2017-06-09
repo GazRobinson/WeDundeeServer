@@ -22,7 +22,7 @@ var 	admin 			= require("firebase-admin");
 
 var serviceAccount 		= require("./wedundeebot-firebase-adminsdk-ibkp7-c6ba8d1dd7.json");
 var 	idleTimer;
-const 	idleTime 		= 5000;
+const 	idleTime 		= 10000;
 global.stopTimer = function () {
 	clearTimeout(idleTimer);
 }
@@ -197,6 +197,8 @@ bot.dialog('/', [function (session, args, next) {
 		
 	}
 }, function (session, args, next) {
+
+	console.log("timer");
 	global.startTimer();
 }]);
 
@@ -264,6 +266,7 @@ bot.dialog('/intro',
 			setTimeout(function () { session.beginDialog('/location'); }, 3000);
 		}, function (session, args) {
 			console.log("end intro");
+			session.dialogStack();
 			session.endDialog();
 		}
 		
@@ -503,15 +506,13 @@ bot.dialog('PICTURE', function (session) {
 
 bot.dialog('/askQuestion', [
     function (session, args) {
-		builder.Prompts.confirm(session, 'Do you have a question about Dundee?');
+		session.send("Ask away!");
+		prompts.beginTextDialog(session);
     },
-	function (session, results) {
-		if (results.response) {
-			builder.Prompts.text(session, 'Ask away!');
-		}
-		else {
-			session.endDialog();
-		}	
+	function (session, args) {
+		SaveQuestion(session.userData.name, args.text);
+		session.send("I'll save that for later, once I have more information.");
+		session.endDialog();
     }
 ]);
 
