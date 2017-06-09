@@ -35,5 +35,13 @@ bot.dialog('/thanks',
             session.send(getRandomThanks());
 		}
 ]
-).triggerAction({ matches: 'gratitude' });    
+    ).triggerAction({ matches: 'gratitude' });    
+
+bot.dialog('/population',
+	[
+		function (session, args) {
+            session.send('There are 148,270 people in Dundee city currently, I have only met a few of of them - but there is plenty time.');
+		}
+]
+).triggerAction({ matches: 'question.population' });      
 }
