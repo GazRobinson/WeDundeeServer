@@ -73,6 +73,35 @@ module.exports.init = function () {
         ]
     ).triggerAction({ matches: /^qq/ });  
     
+    bot.dialog('/questions/single',
+        [
+            function (session, args, next) {
+                var tempQArray = JSON.parse(JSON.stringify(qArray));
+                var possible = [];
+                for (i = 0; i < qArray.length; i++){
+                    var good = true;
+                    for (j = 0; j < session.userData.usedQuestions.length; j++){
+                        if (session.userData.usedQuestions[j] == i) {
+                            good = false;
+                        }
+                    }
+                    if (good) {
+                        possible.push(i);
+                    }    
+                }
+                console.log("Possible count: " + possible.length);
+                if (possible.length > 0) {
+                    var nextQ = Math.floor(Math.random() * possible.length);
+                    session.userData.usedQuestions.push(nextQ);
+                    session.userData.questionCount++;
+                    session.beginDialog(qArray[nextQ]);
+                } else {
+                    session.send("Wait! Sorry! I'm all out of questions apparently :(");
+                }    
+            }
+        ]
+    );
+
     bot.dialog('/questions/another',
         [
             function (session, args, next) {

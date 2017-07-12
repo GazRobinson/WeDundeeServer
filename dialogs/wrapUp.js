@@ -7,12 +7,12 @@ module.exports.init = function () {
         },
         function (session, args, next) {
             if (args.response == 1) {
-                //random question
+                session.beginDialog("/questions/single");
             } else {
                 session.beginDialog("/wrapUp/goodbye");
             }
         }
-    ]);
+    ]).triggerAction({ matches: /^WRAPUP/ }); 
 
     bot.dialog('/wrapUp/goodbye', [
         function (session, args, next) {
@@ -43,6 +43,7 @@ module.exports.init = function () {
             prompts.beginTextDialog(session);
         },
         function (session, args, next) {
+            session.send("Thank you and goodbye!");
             session.endDialog();
         }
     ]);

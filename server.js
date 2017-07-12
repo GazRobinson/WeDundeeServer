@@ -326,10 +326,13 @@ bot.dialog('/intro/confirmName',
 //PROFILE
 bot.dialog('/profile', [
 	function (session, args) {
+		session.userData.questionCount = 0;
+		session.userData.usedQuestions = [];
 		builder.Prompts.text(session, 'Welcome to We Dundee, can I ask your name please? :)');
 	},
 	function (session, results) {
 		session.userData.name = results.response;
+
 		session.endDialog();
 	}
 ]);
