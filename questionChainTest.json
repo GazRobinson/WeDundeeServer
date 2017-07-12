@@ -1,0 +1,217 @@
+{
+    "coffee":{
+        "root": 
+        {
+            "type" : "confirm",
+            "text" : "Do you like coffee?",
+            "log" : false,
+            "positive" : "coffeeYes",
+            "negative" : "coffeeNo"
+        },
+        "coffeeYes":
+        {
+            "type" : "textPrompt",
+            "text" : "Great, where would you go for a good coffee in Dundee?",
+            "log" : true,
+            "userResponses":["Henry's", "Starbucks"]
+        },
+        "coffeeNo": 
+        {
+            "type" : "confirm",
+            "text" : "Do you like tea then?",
+            "log" : false,
+            "positive" : "teaYes",
+            "negative" : "teaNo"
+        },
+        "teaYes":
+        {
+            "type" : "textPrompt",
+            "text" : "Where would you go for a good cup of tea in Dundee?",
+            "log" : true
+        },
+        "teaNo": 
+        {
+            "type" : "confirm",
+            "text" : "Do you prefer something stronger?",
+            "log" : false,
+            "positive" : "drinkYes",
+            "negative" : "drinkNo"
+        },
+        "drinkYes":
+        {
+            "type" : "textPrompt",
+            "text" : "Where would you go to get a good drink in Dundee?",
+            "responseType" : "text",
+            "log" : true,
+            "userResponses":["Spoons", "BrewDog"]
+        },
+        "drinkNo": 
+        {
+            "type" : "statement",
+            "text" : "Ok let's ask another question... Pretend that one didn't happen."
+        }
+    },
+    "famous":{
+        "root": 
+        {
+            "type" : "textPrompt",
+            "text" : "Do you know anyone famous in Dundee?",
+            "log" : true,
+            "expectedResponse" : [
+                {
+                    "answer":"Lorraine Kelly",
+                    "response":"Doesn't everyone..."
+                },
+                {
+                    "answer":"Brian Cox",
+                    "response":"Professor Brian Cox?"
+                }
+            ]
+        }
+    },
+    "carpark":{
+        "root": 
+        {
+            "type" : "textPrompt",
+            "text" : "Dundee has many car parks. Which is your favourite?",
+            "log" : true,
+            "expectedResponse" : [
+                {
+                    "answer":["Greenmarket", "Green market"],
+                    "response":"Yes! Great view of the DCA from there!"
+                },
+                {
+                    "answer":"Bank Street",
+                    "response":"I love the brutalist style of the building; it's a classic."
+                }
+            ]
+        },
+        "response":"Ok, thanks."        
+    },
+    "culturalPlace":{
+        "root": 
+        {
+            "type" : "textPrompt",
+            "text" : "What's your favourite cultural place in the city?",
+            "log" : true,
+            "expectedResponse" : [
+                {
+                    "answer":["DCA", "Dundee Contemporary Arts"],
+                    "response":"Oh yes! I loved the Hideyuki Katsumata exhibition there a couple years back."
+                },
+                {
+                    "answer":["The Rep", "Dundee Rep", "Theatre"],
+                    "response":"Did you know it was set up in 1939 during World War II?"
+                },
+                {
+                    "answer":["McManus"],
+                    "response":"Did you know it was meant to have a large tower but the ground couldn't support it?"
+                }                   
+            ],
+            "response":"Ok, thanks.",
+            "prompt":["Like galleries or museums or places that expand your knowledge."]
+        }
+    },
+    "food":{
+        "root": 
+        {
+            "type" : "confirm",
+            "text" : "Do you eat food?",
+            "log" : false,
+            "positive": "foodPositive",
+            "negative": "foodNegative"
+        },
+        "foodPositive":{
+            "type" : "textPrompt",
+            "text" : "Where would you go to eat food in the city?",
+            "log" : true
+        },
+        "foodNegative":{
+            "type":"statement",
+            "text":"I was told everyone ate food... Okay, let's move along then..."
+        }
+    },
+    "rainyDay":{
+        "root": 
+        {
+            "type" :"textPrompt",
+            "text" : "When it rains, and I know that's not often, what do you do?",
+            "log" : true,
+            "response" : "That's good! I might try that next time",
+            "expectedResponse":[
+                {
+                    "answer":["stay indoor","stay inside"],
+                    "response":"Haha! Me too!"
+                }
+            ],
+            "noResponse":"It never rains here! Why should you have an answer!"
+        }
+    },
+    "sunnyDay":{
+        "root": 
+        {
+            "type" :"textPrompt",
+            "text" : "What's your favourite thing to do on a sunny day?",
+            "log" : true,
+            "response" : "You and everyone else I bet",
+            "noResponse":"It's fine if you don't do anything, let's try another question!"
+        }
+    },
+    "nearby":{
+        "root": 
+        {
+            "type" :"textPrompt",
+            "text" : "What's your favourite thing to do nearby, but not in Dundee?",
+            "log" : true,
+            "response" : "I've been meaning to do that.",
+            "prompt":"Like in a 20 mile radius of the city",
+            "noResponse":"Why leave Dundee when there's lots to do here?"
+        }
+    },
+    "secret":{
+        "root": 
+        {
+            "type" :"confirm",
+            "text" : "I bet you know a good secret about the city?",
+            "log" : false,
+            "positive":"positiveRoot",
+            "negative":"negativeRoot"
+        },
+        "positiveRoot":{            
+            "type" :"textPrompt",
+            "text" : "What is it? I promise I won't tell!",
+            "log" : true
+        }, 
+        "negativeRoot":{
+            "type" :"confirm",
+            "text" : "Would you like to hear one I know?",
+            "log" : false,
+            "positive":"positiveSecret",
+            "negative":"negativeSecret"            
+        },
+        "positiveSecret":{            
+            "type" : "statement",
+            "text" : "Everyone loves a secret... Ok, here it is",
+            "log" : false,
+            "next" : "/loadSecret"
+        }, 
+        "negativeSecret":{
+            "type" :"confirm",
+            "text" : "Are you sure? Everyone loves a secret!",
+            "log" : false,
+            "positive":"positiveAreYouSure",
+            "negative":"negativeAreYouSure"            
+        },
+        "positiveAreYouSure":{            
+            "type" : "statement",
+            "text" : "Knowledge is power... here goes...",
+            "log" : false,
+            "next" : "/loadSecret"
+        }, 
+        "negativeAreYouSure":{
+            "type" :"statement",
+            "text" : "I admire your restraint!",
+            "log" : false           
+        }
+    }
+}

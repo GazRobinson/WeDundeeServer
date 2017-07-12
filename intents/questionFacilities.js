@@ -12,10 +12,26 @@ module.exports = function () {
             } else if (/museum/i.test(place.entity)) {
             session.send("The McManus Gallery is Dundee's Art gallery and museum, it has several galleries and a cafe.");
             session.endDialog();
+            } else if (/DCA/i.test(place.entity)) {
+                session.beginDialog('/question.facility.DCA');   
+           // session.send("Dundee Contemporary Arts Gallery is in the west end of Dundee and has a a gallery, cinema, shop, cafe and print studio. Would you like to visit their website?");
+            //session.endDialog();
             }
         } else {
             session.send("Do I look like Wikipedia?");
             session.endDialog();
         }    
     }).triggerAction({ matches: 'question.facility' });
+
+    bot.dialog('/question.facility.DCA', [function (session, args) {        
+            session.send("Dundee Contemporary Arts Gallery is in the west end of Dundee and has a a gallery, cinema, shop, cafe and print studio. Would you like to visit their website?");
+			prompts.beginConfirmDialog(session, {skip:false});
+    }, function (session, args) {
+        if (args.response == 1) {
+            session.beginDialog('/otherSite');
+        } else {
+            session.send("Ok then, maybe another time!");
+            session.endDialog();
+        } 
+    }]).triggerAction({ matches: /^DCA/ });
 }

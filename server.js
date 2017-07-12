@@ -1,28 +1,34 @@
-const 	config 			= require('./config.js')
+const config = require('./config.js')
 require('./connectorSetup.js')();
 require('dotenv').config()
 
-global.prompts 			= require('./dialogs/prompts.js');
-const 	defaultDialog 	= require('./dialogs/default.js')
-var 	dialogs 		= {};
-var 	greets 			= require('./intents/greetings.js');
-dialogs.inactivity 		= require('./dialogs/inactivity.js');
+global.prompts = require('./dialogs/prompts.js');
+const defaultDialog = require('./dialogs/default.js')
+var dialogs = {};
+var greets = require('./intents/greetings.js');
+dialogs.inactivity = require('./dialogs/inactivity.js');
 dialogs.inactivity.init();
-dialogs.fallback 		= require('./dialogs/fallback.js');
+dialogs.fallback = require('./dialogs/fallback.js');
 dialogs.fallback.init();
 require('./dialogs/interrupts.js')();
-dialogs.media 			= require('./dialogs/media.js');
+dialogs.media = require('./dialogs/media.js');
 dialogs.media.init();
-require('./dialogs/weather.js')();
+dialogs.weather = require('./dialogs/weather.js');
+dialogs.weather.init();
+dialogs.beginning = require('./dialogs/beginning.js');
+dialogs.beginning.init();
+dialogs.wrapUp = require('./dialogs/wrapUp.js');
+dialogs.wrapUp.init();
+
 require('./dialogs/intentManager.js')();
 require('./intents/questionFacilities.js')();
-var 	mysql 			= require('mysql');
-var 	wordpress 		= require('wordpress');
-var 	admin 			= require("firebase-admin");
+var mysql = require('mysql');
+var wordpress = require('wordpress');
+var admin = require("firebase-admin");
 
-var serviceAccount 		= require("./wedundeebot-firebase-adminsdk-ibkp7-c6ba8d1dd7.json");
-var 	idleTimer;
-const 	idleTime 		= 10000;
+var serviceAccount = require("./wedundeebot-firebase-adminsdk-ibkp7-c6ba8d1dd7.json");
+var idleTimer;
+const idleTime = 10000;
 global.stopTimer = function () {
 	clearTimeout(idleTimer);
 }
@@ -32,86 +38,70 @@ global.startTimer = function () {
 }
 
 admin.initializeApp({
-  credential: admin.credential.cert(serviceAccount),
-  databaseURL: "https://wedundeebot.firebaseio.com"
+	credential: admin.credential.cert(serviceAccount),
+	databaseURL: "https://wedundeebot.firebaseio.com"
 });
 
 
 
 // Get a database reference to our blog
-var db = admin.database();
+module.exports.db = db = admin.database();
 var ref = db.ref("server/saving-data/questions");
 
 
 var usersRef = ref;
 var naaaame = "Cool guy";
-/*
-usersRef.child(userData.name).set({
-  date_of_birth: "June 23, 1912",
-  full_name: "Alan Turing"
-});*/
+dialogs.questions = require('./dialogs/questions.js');
+dialogs.questions.init();
 
-function SaveQuestion(name, question){
-	/*usersRef.child(name + Math.floor(Math.random() * 1000)).set({
-	    from: name,
+function SaveQuestion(name, question) {
+	var newPostRef = usersRef.push();
+	newPostRef.set({
+		from: name,
 		question: question,
-		answers: ["Answer A", "Anser B"]
-	});*/
-    var newPostRef = usersRef.push();
-    newPostRef.set( {
-        from: name,
-        question: question,
-        answered: false,
-        checked: false//,
-        //answers: ["Answer A", "Anser B"]
-    });
+		answered: false,
+		checked: false//,
+		//answers: ["Answer A", "Anser B"]
+	});
 };
 
-function GetBackendQuestion(callback){
-    ref.on("value", function(snapshot) {
+function GetBackendQuestion(callback) {
+	ref.on("value", function (snapshot) {
 		console.log(snapshot.val());
 		ref.off("value");
 
-	    var obj_keys = Object.keys(snapshot.val());
-        var ran_key = obj_keys[Math.floor(Math.random() *obj_keys.length)];
-        var selectedquestion = snapshot.val()[ran_key];
-        currentQuestionID = ran_key;
-        currentQuestion = selectedquestion;
+		var obj_keys = Object.keys(snapshot.val());
+		var ran_key = obj_keys[Math.floor(Math.random() * obj_keys.length)];
+		var selectedquestion = snapshot.val()[ran_key];
+		currentQuestionID = ran_key;
+		currentQuestion = selectedquestion;
 		console.log(selectedquestion);
-        callback(currentQuestion);
-        //AnswerQuestion(ran_key, selectedquestion.answers, ["New Answer A", "New Answer B"]);
-    }, function (errorObject) {
-      console.log("The read failed: " + errorObject.code);
-      ref.off("value");
-    });
-    //ref.off("value", originalCallback);
+		callback(currentQuestion);
+		//AnswerQuestion(ran_key, selectedquestion.answers, ["New Answer A", "New Answer B"]);
+	}, function (errorObject) {
+		console.log("The read failed: " + errorObject.code);
+		ref.off("value");
+	});
+	//ref.off("value", originalCallback);
 };
 
-function AnswerQuestion(id, currentAnswers, newAnswers){
-	var keyyyy = id+"/answers";
+function AnswerQuestion(id, currentAnswers, newAnswers) {
+	var keyyyy = id + "/answers";
 	var obb = {};
 	var arr = newAnswers;
-	if(currentAnswers != null){
-	arr = currentAnswers.concat(newAnswers);
+	if (currentAnswers != null) {
+		arr = currentAnswers.concat(newAnswers);
 	}
 	obb[keyyyy] = arr;
 	usersRef.update(obb
 	);
-	/*var newPostRef = usersRef.child(id).push();
-	newPostRef.set( {
-	        from: name,
-	        question: question,
-	        answered: false,
-	        checked: false//,
-	        //answers: ["Answer A", "Anser B"]
-	    });*/
 }
 
 //WORDPRESS
 var wpClient = wordpress.createClient({
-    url: "http://www.devmode.wedundee.com",
-    username: "Gaz",
-    password: "Z8n-ScW-akq-Jww"
+	url: "http://www.devmode.wedundee.com",
+	username: "Gaz",
+	password: "Z8n-ScW-akq-Jww"
 });
 
 var intents = new builder.IntentDialog();
@@ -151,21 +141,34 @@ bot.on('conversationUpdate', function (message) {
 		global.address = message.address;
 		bot.loadSession(message.address, function (err, session) {
 			if (err)
-				console.log("ERR: " + err);	
+				console.log("ERR: " + err);
 			if (session.userData.name) {
 				bot.send(new builder.Message()
 					.address(address)
 					.text("Hello " + session.userData.name + ", it's so nice to see your face again."));
 			} else {
-				session.send("Hello, welcome to We Dundee.");
+				var summary = dialogs.weather.GetCurrentWeather().summary.toLowerCase();
+				session.send("Hello, welcome to We Dundee. Where the weather is currently " + summary + ".");
+				ResetForSession(session);
+				setTimeout(function () {
+					if (summary.includes("sunny")||summary.includes("clear")) {
+						session.send("Of course it is - it's always like that here ;)");
+					} else {
+						session.send("Hmmm, that can't be right. Anyway...");
+					}	
+				}, 5000);
 			}
 		});
-	} else
-	{
+	} else {
 		console.log("Set REAL address");
 		global.address = message.address;
+
 		//idleTimer = setTimeout(reactToIdle, idleTime);
-	}	
+	}
+});
+
+bot.dialog('/weatherComment', function (session, args) {
+	
 });
 
 
@@ -177,13 +180,13 @@ reactToIdle = function () {
 
 bot.dialog('/inactive', [
 	function (session, args) {
-		bot.beginDialog(global.address, args);		
+		bot.beginDialog(global.address, args);
 	}, function (session, args) {
 		global.startTimer();
 	}
 ]);
 
-bot.dialog('/', [function (session, args, next) {	
+bot.dialog('/', [function (session, args, next) {
 	console.log("This is the ROOT");
 	global.address = session.message.address;
 	global.stopTimer();
@@ -193,8 +196,8 @@ bot.dialog('/', [function (session, args, next) {
 	} else {
 		console.log("ROOT ");
 		var randum = dialogs.fallback.getRandom();
-		session.beginDialog( randum, dialogs.fallback.getConfusion());
-		
+		session.beginDialog(randum, dialogs.fallback.getConfusion());
+
 	}
 }, function (session, args, next) {
 
@@ -214,94 +217,141 @@ var doneIntro = false;
 //Greeting
 bot.dialog('/greeting', [function (session, args, next) {
 	global.address = session.message.address;
-		if (!session.userData.name) {
-			session.beginDialog('/intro');
-			
+	if (!session.userData.name) {
+		session.beginDialog('/intro');
+
+	} else {
+		if (!doneIntro) {
+			session.beginDialog('/confirmIdentity');
+			doneIntro = true;
 		} else {
-			if (!doneIntro) {
-				session.beginDialog('/confirmIdentity');
-				doneIntro = true;
-			} else
-			{
-				session.send(greets.getGreetings());
-				global.startTimer();
-				session.endDialog();
-			}	
-        }
+			session.send(greets.getGreetings());
+			global.startTimer();
+			session.endDialog();
+		}
 	}
-	
+}
+
 ]
 ).triggerAction({ matches: 'greeting' });
 
-	bot.dialog('/confirmIdentity', [function (session, args) {
-		session.send("Welcome back " + session.userData.name + " it's nice to see your face again! Are you still " + session.userData.name + "?");
-		prompts.beginConfirmDialog(session, { skip: false, unsureResponse: "You don't know if you're you? Are you " + session.userData.name + "??" });
-	},
-	function (session, args, next) {
-		if (args.response == 1) {
-			session.send("Lovely. It's good to have you back!");
-			global.startTimer();
-			//setTimeout(function () { session.beginDialog('/smallTalk'); }, 4000);
-			session.endDialog();
-		} else {
-			session.send("My mistake, you looked like somebody else. This is awkward...")
+bot.dialog('/confirmIdentity', [function (session, args) {
+	ResetForSession(session);
+	session.send("Welcome back " + session.userData.name + " it's nice to see your face again! Are you still " + session.userData.name + "?");
+	prompts.beginConfirmDialog(session, {
+		skip: false,
+		questionText: "Welcome back " + session.userData.name + " it's nice to see your face again! Are you still " + session.userData.name + "?",
+		unsureResponse: "You don't know if you're you? Are you " + session.userData.name + "??"
+	});
+},
+function (session, args, next) {
+	if (args.response == 1) {
+		session.send("Lovely. It's good to have you back!");
+		//global.startTimer();
+		session.endDialog();
+		setTimeout(function () { session.beginDialog('/beginning/rejoin'); }, 4000);
+			
+	} else {
+		session.send("My mistake, you looked like somebody else. This is awkward...")
 
-			setTimeout(next, 3000);
-		}
-	},
-	function (session, args, next) {
-		session.send("Let's start over!");
-		setTimeout(function () { session.beginDialog('/intro'); }, 3000);
-	}]
+		setTimeout(next, 3000);
+	}
+},
+function (session, args, next) {
+	session.send("Let's start over!");
+	setTimeout(function () { session.beginDialog('/intro'); }, 3000);
+}]
 )
 
 //INTRO
 bot.dialog('/intro',
 	[
 		function (session, args) {
-		session.beginDialog('/profile');
+			session.beginDialog('/profile');
 		},
-		function (session, results) {
+		function (session, results, next) {
+			if (session.userData.name.includes(" ")) {
+				session.beginDialog("/intro/confirmName");
+			} else {
+				next();
+			}
+		},
+		function (session, results, next) {
 			session.send('Hello %s, nice to meet you!', session.userData.name);
-			setTimeout(function () { session.beginDialog('/location'); }, 3000);
+			//setTimeout(function () { session.beginDialog('/location'); }, 3000);
+			setTimeout(function () { session.beginDialog('/beginning/intro'); }, 3000);
 		}, function (session, args) {
 			console.log("end intro");
 			session.dialogStack();
 			session.endDialog();
 		}
-		
-]
+
+	]
 ).triggerAction({ matches: 'greeting' });
 
+bot.dialog('/intro/confirmName',
+	[
+		//TODO: better handling
+		function (session, args) {
+			var split = session.userData.name.split(' ');
+			session.send("Can I just call you " + split[0] + "?");
+			prompts.beginConfirmDialog(session);
+		},
+		function (session, args, next) {
+			if (args.response == 1) {
+				session.userData.name = session.userData.name.split(' ')[0];
+				session.endDialog();
+			} else {
+				session.send("Well how about " + session.userData.name.split(' ')[1] + "?");
+				prompts.beginConfirmDialog(session);
+			}
+		},
+		function (session, args, next) {
+			if (args.response == 1) {
+				session.userData.name = session.userData.name.split(' ')[1];
+				session.endDialog();
+			} else {
+				session.send("Well what shall I call you?");
+				prompts.beginTextDialog(session);
+			}
+		},
+		function (session, args, next) {
+			if (args.text) {
+				session.userData.name = args.text;
+			} 
+			session.endDialog();
+		}
+	]
+)
 //PROFILE
 bot.dialog('/profile', [
-    function (session, args) {
+	function (session, args) {
 		builder.Prompts.text(session, 'Welcome to We Dundee, can I ask your name please? :)');
-    },
-    function (session, results) {
+	},
+	function (session, results) {
 		session.userData.name = results.response;
-        session.endDialog();
-    }
+		session.endDialog();
+	}
 ]);
 
 //SMALLTALK
 bot.dialog('/smallTalk', [
 	function (session, args) {
 		//console.log(session.message.address);
-		
+
 		const dialogs = [
-		//	'/userWeather',
+			//	'/userWeather',
 			'/genericQuestion'
 		]
 		session.beginDialog(dialogs[Math.floor(Math.random() * dialogs.length)])
-    }
+	}
 ]);
 
 //IMG RESULTS
 function callback(results) {
 	console.log(results);
 	var msg = new builder.Message().address(address);
-    msg.text('Here you go!');
+	msg.text('Here you go!');
 	msg.textLocale('en-US');
 	msg.addAttachment({
 		contentType: "image/jpeg",
@@ -316,41 +366,41 @@ bot.dialog('/showThought',
 	[
 		function (session, args) {
 
-    		global.address = session.message.address;
+			global.address = session.message.address;
 
 			console.log(args.intent);
 			if (args.intent.entities != null) {
 				console.log(builder.EntityRecognizer.findEntity(args.intent.entities, 'botThing'));
-			console.log(args.intent.entities[0].resolution);
-			if (builder.EntityRecognizer.findEntity(args.intent.entities, 'botThing').resolution.values[0] == "thought") {
-				session.beginDialog('/displayThought');
-			} else if (builder.EntityRecognizer.findEntity(args.intent.entities, 'botThing').resolution.values[0] == "picture") {
-				console.log("Getting picture");	
-                session.beginDialog('/showPicture');
-			} else if (builder.EntityRecognizer.findEntity(args.intent.entities, 'botThing').resolution.values[0] == "music") {
-				console.log("Getting music");	
-                session.beginDialog('/playMusic');
+				console.log(args.intent.entities[0].resolution);
+				if (builder.EntityRecognizer.findEntity(args.intent.entities, 'botThing').resolution.values[0] == "thought") {
+					session.beginDialog('/displayThought');
+				} else if (builder.EntityRecognizer.findEntity(args.intent.entities, 'botThing').resolution.values[0] == "picture") {
+					console.log("Getting picture");
+					session.beginDialog('/showPicture');
+				} else if (builder.EntityRecognizer.findEntity(args.intent.entities, 'botThing').resolution.values[0] == "music") {
+					console.log("Getting music");
+					session.beginDialog('/playMusic');
+				}
 			}
 		}
-	}
-]
+	]
 ).triggerAction({ matches: 'showMe' });
 
 bot.dialog('/displayThought',
 	[
 		function (session, args) {
-				session.send("Here's something someone wanted to see in the city...");
-				console.log("Getting thought");
-				wpClient.getPosts({post_type: 'thoughts', number:1, offset:Math.floor(Math.random() * 1000)},function (error, posts) {
+			session.send("Here's something someone wanted to see in the city...");
+			console.log("Getting thought");
+			wpClient.getPosts({ post_type: 'thoughts', number: 1, offset: Math.floor(Math.random() * 1000) }, function (error, posts) {
 				if (error) console.log(error);
 				console.log("Found " + posts.length + " posts!");
 				if (posts.length > 0) {
 					console.log(posts[0]);
-					setTimeout(function () { session.send( '"' + posts[0].content + '"') }, 3000);
+					setTimeout(function () { session.send('"' + posts[0].content + '"') }, 3000);
 				}
 			});
-	}
-]
+		}
+	]
 );
 
 bot.dialog('/playMusic',
@@ -365,14 +415,36 @@ bot.dialog('/playMusic',
 				name: "Laeto"
 			});
 			bot.send(msg);
-			
+
 			setTimeout(next, 5000);
 
 		}, function (session, args, next) {
 			session.send("Just type 'Stop music' if you've had enough!");
 			session.endDialog();
 		}
-]
+	]
+);
+
+bot.dialog('/otherSite',
+	[
+		function (session, args, next) {
+			var msg = new builder.Message().address(global.address);
+			msg.text("Taking you to an external site");
+			msg.textLocale('en-US');
+			msg.addAttachment({
+				contentType: "web/link",
+				contentUrl: 'http://www.dca.org.uk',
+				name: "DCA"
+			});
+			bot.send(msg);
+
+			setTimeout(next, 5000);
+
+		}, function (session, args, next) {
+			session.send("See you soon!");
+			session.endDialog();
+		}
+	]
 );
 
 
@@ -381,7 +453,7 @@ bot.dialog('/genericQuestion', [
 	function (session, args) {
 		session.send(greets.getGenericQuestion());
 		prompts.beginTextDialog(session);
-			
+
 	},
 	function (session, args) {
 		console.log("Response: " + args.text);
@@ -389,7 +461,7 @@ bot.dialog('/genericQuestion', [
 			session.send(greets.getQuestionResponse());
 		} else {
 			session.send(greets.getUnsureResponse());
-		}	
+		}
 	}
 ]);
 
@@ -407,13 +479,13 @@ bot.dialog('/location',
 				//prompts.beginConfirmDialog(session);
 				session.send("So " + session.userData.name + ", are you living in Dundee now?");
 				prompts.beginConfirmDialog(session);
-			}	
+			}
 		},
-	/*	function (session, results) {
-			session.userData.dundonian = results.response;
-			session.send("And are you living in Dundee now?");
-			prompts.beginConfirmDialog(session);
-		},*/
+		/*	function (session, results) {
+				session.userData.dundonian = results.response;
+				session.send("And are you living in Dundee now?");
+				prompts.beginConfirmDialog(session);
+			},*/
 		function (session, results) {
 			session.userData.livingInDundee = results.response;
 			if (session.userData.livingInDundee) {
@@ -421,41 +493,41 @@ bot.dialog('/location',
 			} else {
 				session.send("Well then, feel free to ask me questions about the city and I'll try to answer them.");
 				session.endDialog();
-			}				
-		/*	if (session.userData.dundonian && session.userData.livingInDundee) {
-				session.send("Can't bear to leave?");
-				session.beginDialog('/answerQuestion');
-			} else if(session.userData.dundonian && !session.userData.livingInDundee) {
-				session.send("Couldn't stand it any longer?");
-				session.beginDialog('/askMemory');
-			} else if(!session.userData.dundonian && session.userData.livingInDundee) {
-				session.send("Welcome to Dundee!");
-			} else if(!session.userData.dundonian && !session.userData.livingInDundee) {
-				session.send("Well what brings you here?");
-				session.beginDialog('/askQuestion');
-			}*/
-		}		
-]
+			}
+			/*	if (session.userData.dundonian && session.userData.livingInDundee) {
+					session.send("Can't bear to leave?");
+					session.beginDialog('/answerQuestion');
+				} else if(session.userData.dundonian && !session.userData.livingInDundee) {
+					session.send("Couldn't stand it any longer?");
+					session.beginDialog('/askMemory');
+				} else if(!session.userData.dundonian && session.userData.livingInDundee) {
+					session.send("Welcome to Dundee!");
+				} else if(!session.userData.dundonian && !session.userData.livingInDundee) {
+					session.send("Well what brings you here?");
+					session.beginDialog('/askQuestion');
+				}*/
+		}
+	]
 );
 
 
-bot.dialog('/location.permission',[		
-		function (session, args) {
-				session.send("Can I ask you some questions?");
-				prompts.beginConfirmDialog(session, {allowSkip: true});					
-		}, 
-		function (session, args) {
-			if (args.response == 1) {
-				session.beginDialog('/answerQuestion');
-			} else {
-				session.send("That’s ok, what would you like to ask me instead?");
-				session.endDialog();
-			}	
-		},
-		function (session, results) {
-			console.log("end location/permission")
+bot.dialog('/location.permission', [
+	function (session, args) {
+		session.send("Can I ask you some questions?");
+		prompts.beginConfirmDialog(session, { allowSkip: true });
+	},
+	function (session, args) {
+		if (args.response == 1) {
+			session.beginDialog('/answerQuestion');
+		} else {
+			session.send("That’s ok, what would you like to ask me instead?");
 			session.endDialog();
 		}
+	},
+	function (session, results) {
+		console.log("end location/permission")
+		session.endDialog();
+	}
 ]
 );
 
@@ -474,55 +546,57 @@ bot.dialog('help', function (session) {
 
 // RESET
 bot.dialog('RESET', function (session) {
-		session.userData.name = null;
-		session.userData.dundonian = null;
-		session.userData.livingInDundee = null;
+	session.userData.name = null;
+	session.userData.dundonian = null;
+	session.userData.livingInDundee = null;
+	session.userData.questionCount = 0;
+	session.userData.usedQuestions = [];
 	session.send("RESETTING.");
-		session.beginDialog('/');
+	session.beginDialog('/');
 }).triggerAction({ matches: /^RESET/ });
 
 // ROOT
 bot.dialog('ROOT', function (session) {
-		session.beginDialog('/');
+	session.beginDialog('/');
 }).triggerAction({ matches: /^ROOT/ });
 
 // PICTURE
 bot.dialog('PICTURE', function (session) {
 	session.send("Trying to send a picture...");
-		session.send({
-            text: "Here!",
-            attachments: [
-                {
-                    contentType: "image/jpeg",
-                    contentUrl: "http://www.dundeepartnership.co.uk/sites/default/files/The%20Law_small%20%28crop%29.jpg",
-                    name: "Law"
-                }
-            ]
-        });
+	session.send({
+		text: "Here!",
+		attachments: [
+			{
+				contentType: "image/jpeg",
+				contentUrl: "http://www.dundeepartnership.co.uk/sites/default/files/The%20Law_small%20%28crop%29.jpg",
+				name: "Law"
+			}
+		]
+	});
 }).triggerAction({ matches: /^PICTURE/ });
 
 //////END INTERRUPTS/////////
 
 
 bot.dialog('/askQuestion', [
-    function (session, args) {
+	function (session, args) {
 		session.send("Ask away!");
 		prompts.beginTextDialog(session);
-    },
+	},
 	function (session, args) {
 		SaveQuestion(session.userData.name, args.text);
 		session.send("I'll save that for later, once I have more information.");
 		session.endDialog();
-    }
+	}
 ]);
 
 bot.dialog('/answerQuestion', [
 	function (session, args) {
-			session.send(greets.getPositiveResponse() + "! Okay, let's see here...");
-			setTimeout(function () {
-				GetBackendQuestion(function (quest) { session.beginDialog('/answerQuestion.quest', {questionData: quest}); });
-				
-			}, 3000); 
+		session.send(greets.getPositiveResponse() + "! Okay, let's see here...");
+		setTimeout(function () {
+			GetBackendQuestion(function (quest) { session.beginDialog('/answerQuestion.quest', { questionData: quest }); });
+
+		}, 3000);
 	}
 ]).triggerAction({ matches: /^ANSWER/ });
 
@@ -539,26 +613,30 @@ bot.dialog('/answerQuestion.quest', [
 				session.send(greets.getQuestionResponse());
 			} else {
 				session.send(args.botResponse);
-			}	
+			}
 		} else {
 			session.send(greets.getUnsureResponse());
 		}
-		session.endDialog(); 
+		session.endDialog();
 	}
 ]);
 var currentQuestionID;
 var currentQuestion;
 bot.dialog('/askMemory', [
-    function (session, args) {
+	function (session, args) {
 		session.send("Do you have any fond memories of Dundee?");
-		prompts.beginConfirmDialog(session);		
-    },
+		prompts.beginConfirmDialog(session);
+	},
 	function (session, results) {
 		if (results.response) {
 			builder.Prompts.text(session, 'Why not share one?');
 		}
 		else {
 			session.endDialog();
-		}	
-    }
+		}
+	}
 ]);
+
+function ResetForSession(session) {
+	session.userData.questionCount = 0;
+}

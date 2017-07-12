@@ -7,7 +7,11 @@ function getWeather() {
 	return "It's " + currentForecast.currently.summary + " with a temperature of " + currentForecast.currently.temperature + " degrees!";
 }
 
-module.exports = function () {
+module.exports.GetCurrentWeather = function () {
+    return currentForecast.currently;
+}
+
+module.exports.init = function () {
     
     //FORECAST
     var forecast = new Forecast({

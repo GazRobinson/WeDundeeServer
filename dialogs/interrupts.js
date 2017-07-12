@@ -29,6 +29,24 @@ module.exports = function () {
 ]
     ).triggerAction({ matches: /^Stop Music/i });
 
+    bot.dialog('/interrupt',
+	[
+        function (session, args) {
+            console.log(session.dialogStack());
+            session.send("HEY! Don't interrupt me!");
+            session.endDialogWithResult({ interrupt: true });
+		}
+    ]
+    ).triggerAction({
+        matches: /^INTERRUPT/,
+        onSelectAction: (session, args, next) => {
+        // Add the help dialog to the dialog stack 
+        // (override the default behavior of replacing the stack)
+            console.log(args);    
+        session.beginDialog(args.action.split("*:")[1].split(')')[0], args);
+    } }
+    );
+
 bot.dialog('/thanks',
 	[
 		function (session, args) {

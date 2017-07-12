@@ -45,7 +45,33 @@ module.exports.init = function () {
             session.endDialog();
         }
     ]
-    );    
+    );  
+    bot.dialog('/media/requestPicture', [
+        function (session, args) {        
+    		global.address = session.message.address;
+            session.send("I'm thinking of showing people images of the city like this. Would you have on I could use?");  
+            prompts.beginConfirmDialog(session);
+            global.currentSession = session;
+            setTimeout(function () { var results = imageSearch('Dundee', args ? args.callback : defaultImageCallback, 0, 1);}, 3000);	                  
+        },
+        function (session, args, next) {
+            if (args.response == 1) {
+                session.beginDialog("/media/emailPic");
+            } else {
+                session.beginDialog("/wrapUp/oneMore");
+            }
+        }
+    ]
+    ); 
+    bot.dialog('/media/emailPic', [
+        function (session, args) {        
+            session.send("Here's my email address, write it down and send my a picture sometime!");  
+            session.endDialog();
+        }
+    ]
+    ); 
+    
+
 
     bot.dialog('/displayPicture', function (session, args, next) {        
             session.endDialog();

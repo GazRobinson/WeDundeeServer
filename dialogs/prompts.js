@@ -9,7 +9,7 @@ var builder = require('botbuilder');
 exports.beginConfirmDialog = function (session, options) {
     console.log('Do Confirm');
     global.stopTimer();
-    session.beginDialog('confirm', options || {});
+    session.beginDialog('/prompts/confirm', options || {});
 }
 
 exports.createConfirmDialog = function (bot, recog) {
@@ -20,10 +20,18 @@ exports.createConfirmDialog = function (bot, recog) {
             console.log("HERE?");
             global.session = session;
             console.log(session.dialogStack());
+            if (args.questionText) {
+                session.dialogData.qText = args.questionText;
+            }
+            if (args.repeat) {
+                session.send(session.dialogData.qText);
+            }
             unsureResponse = args.unsureResponse || getNonUnderstand();
             allowSkip = false;
             if (args) {
-                allowSkip = args.skip;
+                if (args.skip) {
+                    allowSkip = args.skip;
+                }    
             }    
         })
         .matches('positiveResponse', function (session, args) {
@@ -47,14 +55,14 @@ exports.createConfirmDialog = function (bot, recog) {
                 session.send(unsureResponse);
             }    
         });
-    bot.dialog('confirm', prompt);
+    bot.dialog('/prompts/confirm', prompt);
 }
 
 
 //CUSTOM TEXT
 exports.beginTextDialog = function (session, options) {
     console.log('Do Text');
-    session.beginDialog('text', options || {});
+    session.beginDialog('/prompts/text', options || {});
 }
 
 exports.createTextDialog = function (bot, recog) {
@@ -75,7 +83,7 @@ exports.createTextDialog = function (bot, recog) {
             session.endDialogWithResult({ text: session.message.text,
             response: true, botResponse: botResponse});
         });
-    bot.dialog('text', prompt);
+    bot.dialog('/prompts/text', prompt);
 }
 
 const getNonUnderstand = () => {
