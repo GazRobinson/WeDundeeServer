@@ -132,8 +132,10 @@ module.exports.init = function () {
                 }    
             }, function (session, args, next) {
                 if (session.userData.finishedQuestions) {
-                    next();
-                    return;
+                        session.send("Wow! You got through all the questions I have!");
+	                    session.userData.finishedQuestions = true;
+                        setTimeout(function () { session.beginDialog('/questions/askAQuestion'); }, 4000);
+                        return;
                 }
                 if (session.userData.questionCount < 3) {
                     session.replaceDialog("/questions/intro");
