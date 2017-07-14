@@ -33,42 +33,44 @@ module.exports.init = function () {
         [
             function (session, args, next) {
                 console.log("starting question: " + session.userData.questionCount);
-                console.log("user length: " + session.userData.usedQuestions.length);
+                console.log(session.userData.usedQuestions);
                 var tempQArray = JSON.parse(JSON.stringify(qArray));
                 var possible = [];
                 for (i = 0; i < qArray.length; i++){
                     var good = true;
                     for (j = 0; j < session.userData.usedQuestions.length; j++){
-                        if (session.userData.usedQuestions[j] == i) {
+                        if (session.userData.usedQuestions[j] == qArray[i]) {
                             good = false;
                         }
                     }
                     if (good) {
-                        possible.push(i);
+                        possible.push(qArray[i]);
                     }    
                 }
-                console.log("Possible count: " + possible.length);
+                console.log("Possible");
+                console.log(possible);
                 if (possible.length > 0) {
-                    var nextQ = Math.floor(Math.random() * possible.length);
+                    var nextQ = possible[Math.floor(Math.random() * possible.length)];
                     session.userData.usedQuestions.push(nextQ);
                     session.userData.questionCount++;
-                    console.log("Doing question");
-                    session.beginDialog(qArray[nextQ]);
+                    session.beginDialog(nextQ);
                 } else {
-                    session.send("Sorry! That's all the questions I have for now :(");
+                    next();
                 }    
             }, function (session, args, next) {
 
                 if (session.userData.questionCount < 3) {
-                    session.beginDialog("/questions/intro");
+                    session.replaceDialog("/questions/intro");
                 } else {
                     if (session.userData.usedQuestions.length < qArray.length) {
                         session.beginDialog("/questions/another");
                     } else {
                         session.send("Wow! You got through all the questions I have!");
-                        session.endDialog();
+                        setTimeout(function () { session.beginDialog('/questions/askAQuestion'); }, 4000);
                     }    
                 }    
+            }, function (session, args, next) {
+                session.endDialog();                    
             }
         ]
     ).triggerAction({ matches: /^qq/ });  
@@ -81,23 +83,45 @@ module.exports.init = function () {
                 for (i = 0; i < qArray.length; i++){
                     var good = true;
                     for (j = 0; j < session.userData.usedQuestions.length; j++){
-                        if (session.userData.usedQuestions[j] == i) {
+                        if (session.userData.usedQuestions[j] == qArray[i]) {
                             good = false;
                         }
                     }
                     if (good) {
-                        possible.push(i);
+                        possible.push(qArray[i]);
                     }    
                 }
                 console.log("Possible count: " + possible.length);
                 if (possible.length > 0) {
-                    var nextQ = Math.floor(Math.random() * possible.length);
+                    var nextQ = possible[Math.floor(Math.random() * possible.length)];
                     session.userData.usedQuestions.push(nextQ);
                     session.userData.questionCount++;
-                    session.beginDialog(qArray[nextQ]);
+                    session.beginDialog(nextQ);
                 } else {
                     session.send("Wait! Sorry! I'm all out of questions apparently :(");
+                    setTimeout(function () { session.beginDialog('/questions/askAQuestion'); }, 4000);
                 }    
+            }
+        ]
+    );
+
+    bot.dialog('/questions/askAQuestion',
+        [
+            function (session, args, next) {
+                if (!session.userData.askedAQuestion) {
+                    session.send("Do you have a question about the city you've always wanted to ask?");
+                    prompts.beginConfirmDialog(session);
+                } else {
+                    session.endDialog();
+                }
+            },
+            function (session, args, next) {
+                if (args.response == 1) {
+                    session.beginDialog('/askQuestion');
+                } else {
+                    session.send("You must know a lot about Dundee!");
+                    session.endDialog();
+                }
             }
         ]
     );
@@ -105,15 +129,18 @@ module.exports.init = function () {
     bot.dialog('/questions/another',
         [
             function (session, args, next) {
-                session.send("I know I said only three questions, but how about another?");
-                    prompts.beginConfirmDialog(session);
-                },
+                if (session.userData.questionCount == 3) {
+                    session.send("I know I said only three questions, but how about another?");
+                } else {
+                    session.send("How about another one?");
+                }
+                prompts.beginConfirmDialog(session);
+            },
             function (session, args, next) {
                 if (args.response == 1) {
                     session.beginDialog("/questions/intro");
                 } else {
-                    session.send("Nevermind then!");
-                    session.endDialog();
+                    session.beginDialog('/questions/askAQuestion');
                 }
             }
 
@@ -123,8 +150,10 @@ module.exports.init = function () {
 var qArray = [];
 
 function LoadAllQs() {
+    console.log("LOADING QUESTIONS");
     ref.on("value", function(snapshot) {
-		//console.log(snapshot.val());
+        
+        console.log("QUESTIONS LOADED");
 		ref.off("value");
 
 	    var obj_keys = Object.keys(snapshot.val());
@@ -137,7 +166,7 @@ function LoadAllQs() {
             var qKeys = Object.keys(selectedquestion);
         
             for (i = 0; i < qKeys.length; i++) {
-                console.log(selectedquestion[qKeys[i]]);
+             //   console.log(selectedquestion[qKeys[i]]);
                 CreateDialog(ran_key, qKeys[i], selectedquestion[qKeys[i]]);
             }
             var ret = "/" + ran_key + "/root";
@@ -154,16 +183,59 @@ function CreateDialog(rootKeyName, thisKeyName, qData) {
         bot.dialog("/" + rootKeyName + "/" + thisKeyName,
             [
                 function (session, args) {
-                    session.send(qData.text);
-                    prompts.beginTextDialog(session);
+                    if (args && args.clarified) {
+                        session.send(args.text);                        
+                    } else {
+                        session.send(qData.text);
+                    }    
+                    prompts.beginMultiDialog(session);
                 }, 
                 function (session, args) {
+                    if (args.type && args.type == "confirm") {
+                        console.log("conf type: " + args.response);
+                        if (args.response == 1) {
+                            console.log("pos");
+                            if (qData.positiveMsg) {
+                                session.replaceDialog("/" + rootKeyName + "/" + thisKeyName, { clarified: true, text: qData.positiveMsg });
+                                return;
+                            }    
+                        } else if (args.response == 0 || args.response == 2) {
+                            console.log("neg");
+                            session.send(qData.negativeMsg||"That's okay! We'll move on for now!");
+                            session.endDialog();
+                            return;
+                        } 
+                    }
+                    console.log("else");
+                    var expected;
+                    if (qData.expectedResponse) {
+                        expected = qData.expectedResponse;
+                        if (args.response) {
+                            session.dialogData.solved = false;
+                            for (i = 0; i < expected.length; i++) {
+                                for (j = 0; j < expected[i].answer.length; j++) {
+                                    var reg = args.text.match(expected[i].answer[j]);
+                                    console.log(reg);
+                                    if (reg && reg.length > 0) {
+                                        session.dialogData.solved = true;
+                                        session.send(expected[i].response);
+                                        setTimeout(function () { session.endDialog(); }, 6000);
+                                        return;
+                                    }
+                                }
+                            }                            
+                        }
+                    } 
                     if (qData.response != null) {
                         session.send(qData.response);
-                        setTimeout(function () { session.endDialog(); }, 4000);
                     } else {
-                        session.endDialog();
+                        session.send("Thanks");
                     }
+                    setTimeout(function () { session.endDialog(); }, 5000);
+                    return;
+                       
+                }, function (session, args, next) {
+                    session.endDialog();                    
                 }
             ]
         )
@@ -188,7 +260,11 @@ function CreateDialog(rootKeyName, thisKeyName, qData) {
             [
                 function (session, args) {
                     session.send(qData.text);
-                    setTimeout(session.endDialog, 4000);
+                    if (!qData.next) {
+                        setTimeout(function () { session.endDialog(); }, 4000);
+                    } else {
+                        setTimeout(function () { session.beginDialog(qData.next); }, 5000);                        
+                    }    
                 }
             ]                    
         ) 

@@ -17,9 +17,7 @@ exports.createConfirmDialog = function (bot, recog) {
     var unsureResponse;
     var prompt = new builder.IntentDialog({ recognizers: [recog] })
         .onBegin(function (session, args) {
-            console.log("HERE?");
-            global.session = session;
-            console.log(session.dialogStack());
+            
             if (args.questionText) {
                 session.dialogData.qText = args.questionText;
             }
@@ -35,15 +33,12 @@ exports.createConfirmDialog = function (bot, recog) {
             }    
         })
         .matches('positiveResponse', function (session, args) {
-            console.log(args);
             session.endDialogWithResult({ response: 1 });
         })
         .matches('negativeResponse', function (session, args) {
-            console.log(args);
             session.endDialogWithResult({ response: 0 });
         })
         .matches('intent.dontKnow', function (session, args) {
-            console.log(args);
             session.endDialogWithResult({ response: 2 });
         })
         .onDefault(function (session, args) {
@@ -57,8 +52,59 @@ exports.createConfirmDialog = function (bot, recog) {
         });
     bot.dialog('/prompts/confirm', prompt);
 }
+//ambiguous
+exports.beginMultiDialog = function (session, options) {
+    console.log('Do Confirm');
+    global.stopTimer();
+    session.beginDialog('/prompts/multi', options || {});
+}
 
-
+exports.createMultiDialog = function (bot, recog) {
+    var unsureResponse;
+    var prompt = new builder.IntentDialog({ recognizers: [recog] })
+        .onBegin(function (session, args) {
+            
+            if (args.questionText) {
+                session.dialogData.qText = args.questionText;
+            }
+            if (args.repeat) {
+                session.send(session.dialogData.qText);
+            }
+            unsureResponse = args.unsureResponse || getNonUnderstand();
+            allowSkip = false;
+            if (args) {
+                if (args.skip) {
+                    allowSkip = args.skip;
+                }
+            }
+        })
+        .matches('positiveResponse', function (session, args) {
+            if (args.score > scoreThreshold){
+                session.endDialogWithResult({ response: 1, type: "confirm" });
+            } else{
+                session.endDialogWithResult({ response: -1, text: session.message.text });
+            }
+        })
+        .matches('negativeResponse', function (session, args) {
+            if (args.score > scoreThreshold) {
+                session.endDialogWithResult({ response: 0, type: "confirm" });
+            } else{
+                session.endDialogWithResult({ response: -1, text: session.message.text });
+            }
+        })
+        .matches('intent.dontKnow', function (session, args) {
+            if (args.score > scoreThreshold) {
+                session.endDialogWithResult({ response: 2, type: "confirm" });
+            } else{
+                session.endDialogWithResult({ response: -1, text: session.message.text });
+            }    
+        })
+        .onDefault(function (session, args) {
+            session.endDialogWithResult({ response: -1, text: session.message.text });
+        });
+    bot.dialog('/prompts/multi', prompt);
+}
+const scoreThreshold = 0.4;
 //CUSTOM TEXT
 exports.beginTextDialog = function (session, options) {
     console.log('Do Text');
@@ -81,7 +127,7 @@ exports.createTextDialog = function (bot, recog) {
             // Validate users reply.
             console.log('THIS IS THE DEFAULT');
             session.endDialogWithResult({ text: session.message.text,
-            response: true, botResponse: botResponse});
+            response: 1, botResponse: botResponse});
         });
     bot.dialog('/prompts/text', prompt);
 }

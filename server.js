@@ -19,6 +19,10 @@ dialogs.beginning = require('./dialogs/beginning.js');
 dialogs.beginning.init();
 dialogs.wrapUp = require('./dialogs/wrapUp.js');
 dialogs.wrapUp.init();
+dialogs.intro = require('./dialogs/intro.js');
+dialogs.intro.init();
+dialogs.refusal = require('./dialogs/refusal.js');
+dialogs.refusal.init();
 
 require('./dialogs/intentManager.js')();
 require('./intents/questionFacilities.js')();
@@ -33,8 +37,8 @@ global.stopTimer = function () {
 	clearTimeout(idleTimer);
 }
 global.startTimer = function () {
-	clearTimeout(idleTimer);
-	idleTimer = setTimeout(reactToIdle, idleTime);
+	clearTimeout(idleTimer);	
+//	idleTimer = setTimeout(reactToIdle, idleTime);
 }
 
 admin.initializeApp({
@@ -42,20 +46,30 @@ admin.initializeApp({
 	databaseURL: "https://wedundeebot.firebaseio.com"
 });
 
-
-
 // Get a database reference to our blog
+global.SendMessage = function (session, message) {
+	console.log("Send messsage: " + session.userData.name);
+	
+	session.conversationData.messageStack.push(message);
+	session.send(message);
+}
+global.WaitForResponse = function (session, functionCall, t) {	
+	session.dialogData.responded = false;
+	setTimeout(function (responded)
+	{
+		if (!responded) {
+			functionCall();
+		}
+	}, t, session.dialogData.responded);
+}
 module.exports.db = db = admin.database();
 var ref = db.ref("server/saving-data/questions");
 
-
-var usersRef = ref;
-var naaaame = "Cool guy";
 dialogs.questions = require('./dialogs/questions.js');
 dialogs.questions.init();
 
 function SaveQuestion(name, question) {
-	var newPostRef = usersRef.push();
+	var newPostRef = ref.push();
 	newPostRef.set({
 		from: name,
 		question: question,
@@ -93,9 +107,11 @@ function AnswerQuestion(id, currentAnswers, newAnswers) {
 		arr = currentAnswers.concat(newAnswers);
 	}
 	obb[keyyyy] = arr;
-	usersRef.update(obb
+	ref.update(obb
 	);
 }
+
+
 
 //WORDPRESS
 var wpClient = wordpress.createClient({
@@ -111,35 +127,25 @@ global.address;
 var model = 'https://eastus2.api.cognitive.microsoft.com/luis/v2.0/apps/8fce766d-71b2-4dc6-9266-65a27c778841?subscription-key=3e3add150f3a4f9c870d810b653bfd30&timezoneOffset=0&verbose=true&q='
 var recognizer = new builder.LuisRecognizer(model);
 bot.recognizer(recognizer);
-
-//SQL
-/*var con = mysql.createConnection({
-  host: config.sqlHost,
-  user: config.sqlUser,
-  password: config.sqlPword
-});
-
-con.connect(function(err) {
-  if (err) throw err;
-  console.log("Connected!");
-});*/
+bot.set('persistConversationData', true);
 
 //PROMPT CONSTRUCTORS
 // Create prompts
 prompts.createConfirmDialog(bot, recognizer);
 prompts.createTextDialog(bot, recognizer);
+prompts.createMultiDialog(bot, recognizer);
 
 
 var updateCount = 0;
 /////////DIALOGS/////////
 /////
 bot.on('conversationUpdate', function (message) {
-	clearTimeout(idleTimer);
-	console.log(updateCount++);
 	if (message.membersAdded[0].name == "WeDundee") {
 		console.log("Set address");
-		global.address = message.address;
+	//
+				console.log(message.address);
 		bot.loadSession(message.address, function (err, session) {
+			
 			if (err)
 				console.log("ERR: " + err);
 			if (session.userData.name) {
@@ -148,29 +154,48 @@ bot.on('conversationUpdate', function (message) {
 					.text("Hello " + session.userData.name + ", it's so nice to see your face again."));
 			} else {
 				var summary = dialogs.weather.GetCurrentWeather().summary.toLowerCase();
-				session.send("Hello, welcome to We Dundee. Where the weather is currently " + summary + ".");
-				ResetForSession(session);
-				setTimeout(function () {
-					if (summary.includes("sunny")||summary.includes("clear")) {
-						session.send("Of course it is - it's always like that here ;)");
-					} else {
-						session.send("Hmmm, that can't be right. Anyway...");
-					}	
-				}, 5000);
+				session.beginDialog('/intro/start');
 			}
 		});
 	} else {
-		console.log("Set REAL address");
-		global.address = message.address;
+		var add = message.address;
+		add = {
+			id: add.conversation.id + '|0000002',
+			channelId: 'directline',
+			user: { id: message.membersAdded[0].id },
+			conversation: { id: add.conversation.id },
+			bot: { id: 'WeDundee@81U4UWmTR8I', name: 'WeDundee' },
+			serviceUrl: 'https://directline.botframework.com/'
+		};
+		bot.loadSession(add, function (err, session) {
 
-		//idleTimer = setTimeout(reactToIdle, idleTime);
+			if (!session.conversationData.init) {
+				console.log("Set REAL address");
+				console.log(add);
+				Init(session);
+
+				console.log(session.userData);
+				if (err)
+					console.log("ERR: " + err);
+				session.conversationData.address = add;
+				/*setTimeout(function () {
+					userTick(session);
+				}, 5000);*/
+			}
+				console.log("msg sent");
+				session.conversationData.lastMessageTime = Date.now();
+		});
 	}
 });
 
-bot.dialog('/weatherComment', function (session, args) {
-	
-});
-
+function userTick(session) {
+	if (Date.now() - session.conversationData.lastMessageTime > idleTime) {
+		//IDLETRIGGER
+	}
+	setTimeout(function () {
+		userTick(session);
+	}, 5000)
+}
 
 reactToIdle = function () {
 	var randum = dialogs.inactivity.getRandom();
@@ -185,109 +210,114 @@ bot.dialog('/inactive', [
 		global.startTimer();
 	}
 ]);
-
-bot.dialog('/', [function (session, args, next) {
-	console.log("This is the ROOT");
-	global.address = session.message.address;
-	global.stopTimer();
-	if (!session.userData.name) {
-		session.send("We don't even know each other yet!");
-		setTimeout(function () { session.beginDialog('/intro'); }, 3000);
-	} else {
-		console.log("ROOT ");
-		var randum = dialogs.fallback.getRandom();
-		session.beginDialog(randum, dialogs.fallback.getConfusion());
-
-	}
-}, function (session, args, next) {
-
-	console.log("timer");
-	global.startTimer();
-}]);
-
-bot.dialog('/forceIdle', function (session, args) {
-	//session.beginDialog('/inactive/picture');
-	global.address = session.message.address;
-	console.log("Force idle");
-	session.endDialog();
-	reactToIdle();
-}).triggerAction({ matches: /^inactive/ });
-
-var doneIntro = false;
-//Greeting
-bot.dialog('/greeting', [function (session, args, next) {
-	global.address = session.message.address;
-	if (!session.userData.name) {
-		session.beginDialog('/intro');
-
-	} else {
-		if (!doneIntro) {
-			session.beginDialog('/confirmIdentity');
-			doneIntro = true;
+var timeout;
+//ROOT
+bot.dialog('/', [	
+	function (session, args, next) {	
+		if (!session.userData.name) {
+			if (!args || !args.greeting) {
+				session.beginDialog("/root/introductions")
+			} else {
+				session.beginDialog('/intro');				
+			}	
 		} else {
-			session.send(greets.getGreetings());
-			global.startTimer();
-			session.endDialog();
+			if (!session.conversationData.hello) {
+				session.beginDialog('/confirmIdentity');
+			} else {
+				var randum = dialogs.fallback.getRandom();
+				session.beginDialog(randum);
+			}	
+		}		
+	}
+]);
+
+bot.dialog('/root/introductions', [	
+	function (session, args, next) {	
+		session.send("I feel like I hardly know you yet. Why don't we do some introductions?");
+
+		prompts.beginConfirmDialog(session);		
+	},
+	function (session, args, next) {
+		console.log(args);
+		if (args.response == 1) {
+			session.beginDialog('/intro');
+		} else {
+			session.beginDialog("/refusal/introduction");
 		}
 	}
+]);
+
+function check(val) {
+	console.log(val);
 }
 
-]
-).triggerAction({ matches: 'greeting' });
+var doneIntro = false;
 
-bot.dialog('/confirmIdentity', [function (session, args) {
-	ResetForSession(session);
-	session.send("Welcome back " + session.userData.name + " it's nice to see your face again! Are you still " + session.userData.name + "?");
-	prompts.beginConfirmDialog(session, {
-		skip: false,
-		questionText: "Welcome back " + session.userData.name + " it's nice to see your face again! Are you still " + session.userData.name + "?",
-		unsureResponse: "You don't know if you're you? Are you " + session.userData.name + "??"
-	});
-},
-function (session, args, next) {
-	if (args.response == 1) {
-		session.send("Lovely. It's good to have you back!");
-		//global.startTimer();
-		session.endDialog();
-		setTimeout(function () { session.beginDialog('/beginning/rejoin'); }, 4000);
-			
-	} else {
-		session.send("My mistake, you looked like somebody else. This is awkward...")
+global.timeDict = {};
 
-		setTimeout(next, 3000);
-	}
-},
-function (session, args, next) {
-	session.send("Let's start over!");
-	setTimeout(function () { session.beginDialog('/intro'); }, 3000);
-}]
-)
+global.WaitForInput = function(session, time, func) {
+	timeDict[session.userData.name] = setTimeout(func, time);        
+}
 
-//INTRO
-bot.dialog('/intro',
-	[
-		function (session, args) {
-			session.beginDialog('/profile');
-		},
-		function (session, results, next) {
-			if (session.userData.name.includes(" ")) {
-				session.beginDialog("/intro/confirmName");
-			} else {
-				next();
-			}
-		},
-		function (session, results, next) {
-			session.send('Hello %s, nice to meet you!', session.userData.name);
-			//setTimeout(function () { session.beginDialog('/location'); }, 3000);
-			setTimeout(function () { session.beginDialog('/beginning/intro'); }, 3000);
-		}, function (session, args) {
-			console.log("end intro");
-			session.dialogStack();
+bot.dialog('/confirmIdentity', [
+	function (session, args) {
+		ResetForSession(session);
+		console.log("Confirm");
+		console.log(session.message.address);
+		session.send("Welcome back " + session.userData.name + " it's nice to see your face again! Are you still " + session.userData.name + "?");
+		prompts.beginConfirmDialog(session, {
+			skip: false,
+			questionText: "Welcome back " + session.userData.name + " it's nice to see your face again! Are you still " + session.userData.name + "?",
+			unsureResponse: "You don't know if you're you? Are you " + session.userData.name + "??"
+		});
+	},
+	function (session, args, next) {
+		if (args.response == 1) {
+			session.send("Lovely. It's good to have you back!");
+			session.conversationData.hello = true;
+			//global.startTimer();
 			session.endDialog();
-		}
+			setTimeout(function () { session.beginDialog('/beginning/intro'); }, 4000);
+				
+		} else {
+			session.send("My mistake, you looked like somebody else. This is awkward...")
 
-	]
-).triggerAction({ matches: 'greeting' });
+			setTimeout(next, 3000);
+		}
+	},
+	function (session, args, next) {
+		session.send("Let's start over!");
+		setTimeout(function () { session.beginDialog('/intro'); }, 3000);
+	}
+]
+);
+
+ //INTRO
+    bot.dialog('/intro',
+        [
+            function (session, args) {
+                session.beginDialog('/profile');
+            },
+            function (session, results, next) {
+                if (session.userData.name.includes(" ")) {
+                    session.beginDialog("/intro/confirmName");
+                } else {
+                    next();
+                }
+            },
+			function (session, results, next) {
+				
+			session.conversationData.hello = true;
+                session.send('Hello %s, nice to meet you!', session.userData.name);
+                //setTimeout(function () { session.beginDialog('/location'); }, 3000);
+                setTimeout(function () { session.beginDialog('/beginning/intro'); }, 3000);
+            }, function (session, args) {
+                console.log("end intro");
+                session.endDialog();
+            }
+
+        ]
+    );
 
 bot.dialog('/intro/confirmName',
 	[
@@ -326,8 +356,6 @@ bot.dialog('/intro/confirmName',
 //PROFILE
 bot.dialog('/profile', [
 	function (session, args) {
-		session.userData.questionCount = 0;
-		session.userData.usedQuestions = [];
 		builder.Prompts.text(session, 'Welcome to We Dundee, can I ask your name please? :)');
 	},
 	function (session, results) {
@@ -364,30 +392,6 @@ function callback(results) {
 	bot.send(msg);
 
 }
-//ShowMe
-bot.dialog('/showThought',
-	[
-		function (session, args) {
-
-			global.address = session.message.address;
-
-			console.log(args.intent);
-			if (args.intent.entities != null) {
-				console.log(builder.EntityRecognizer.findEntity(args.intent.entities, 'botThing'));
-				console.log(args.intent.entities[0].resolution);
-				if (builder.EntityRecognizer.findEntity(args.intent.entities, 'botThing').resolution.values[0] == "thought") {
-					session.beginDialog('/displayThought');
-				} else if (builder.EntityRecognizer.findEntity(args.intent.entities, 'botThing').resolution.values[0] == "picture") {
-					console.log("Getting picture");
-					session.beginDialog('/showPicture');
-				} else if (builder.EntityRecognizer.findEntity(args.intent.entities, 'botThing').resolution.values[0] == "music") {
-					console.log("Getting music");
-					session.beginDialog('/playMusic');
-				}
-			}
-		}
-	]
-).triggerAction({ matches: 'showMe' });
 
 bot.dialog('/displayThought',
 	[
@@ -399,7 +403,13 @@ bot.dialog('/displayThought',
 				console.log("Found " + posts.length + " posts!");
 				if (posts.length > 0) {
 					console.log(posts[0]);
-					setTimeout(function () { session.send('"' + posts[0].content + '"') }, 3000);
+					if (posts[0].content.length > 200) {
+						setTimeout(function () { session.send("Wow... It's a long one!") }, 4000);
+						setTimeout(function () { session.send('"' + posts[0].content + '"') }, 9000);
+						
+					} else {
+						setTimeout(function () { session.send('"' + posts[0].content + '"') }, 3000);
+					}	
 				}
 			});
 		}
@@ -409,7 +419,7 @@ bot.dialog('/displayThought',
 bot.dialog('/playMusic',
 	[
 		function (session, args, next) {
-			var msg = new builder.Message().address(global.address);
+			var msg = new builder.Message().address(session.message.address);
 			msg.text("Here's some music from Dundee. (You might need to click or tap the screen!)");
 			msg.textLocale('en-US');
 			msg.addAttachment({
@@ -431,7 +441,7 @@ bot.dialog('/playMusic',
 bot.dialog('/otherSite',
 	[
 		function (session, args, next) {
-			var msg = new builder.Message().address(global.address);
+			var msg = new builder.Message().address(session.message.address);
 			msg.text("Taking you to an external site");
 			msg.textLocale('en-US');
 			msg.addAttachment({
@@ -539,48 +549,6 @@ bot.dialog('/location.permission', [
 
 
 
-////////INTERRUPTS//////////
-// Add help dialog
-bot.dialog('help', function (session) {
-	session.send("I'm a simple echo bot.");
-	session.endDialog();
-}).triggerAction({ matches: /^help/i });
-
-
-// RESET
-bot.dialog('RESET', function (session) {
-	session.userData.name = null;
-	session.userData.dundonian = null;
-	session.userData.livingInDundee = null;
-	session.userData.questionCount = 0;
-	session.userData.usedQuestions = [];
-	session.send("RESETTING.");
-	session.beginDialog('/');
-}).triggerAction({ matches: /^RESET/ });
-
-// ROOT
-bot.dialog('ROOT', function (session) {
-	session.beginDialog('/');
-}).triggerAction({ matches: /^ROOT/ });
-
-// PICTURE
-bot.dialog('PICTURE', function (session) {
-	session.send("Trying to send a picture...");
-	session.send({
-		text: "Here!",
-		attachments: [
-			{
-				contentType: "image/jpeg",
-				contentUrl: "http://www.dundeepartnership.co.uk/sites/default/files/The%20Law_small%20%28crop%29.jpg",
-				name: "Law"
-			}
-		]
-	});
-}).triggerAction({ matches: /^PICTURE/ });
-
-//////END INTERRUPTS/////////
-
-
 bot.dialog('/askQuestion', [
 	function (session, args) {
 		session.send("Ask away!");
@@ -588,7 +556,7 @@ bot.dialog('/askQuestion', [
 	},
 	function (session, args) {
 		SaveQuestion(session.userData.name, args.text);
-		session.send("I'll save that for later, once I have more information.");
+		session.send("I'll save that one for later. Once I have more information I'll get back to you!");
 		session.endDialog();
 	}
 ]);
@@ -601,7 +569,24 @@ bot.dialog('/answerQuestion', [
 
 		}, 3000);
 	}
-]).triggerAction({ matches: /^ANSWER/ });
+]);
+//TODO: Remove
+const secretss = [
+	"Rockstar North, makers of Grand Theft Auto, was founded in Dundee",
+	"The inventor of adhesive postage stamps, James Chalmers, was born in Dundee",
+	"The first radio broadcast was sent from Dundee",
+	"The Law  hill is an extinct volcanic plug",
+	"The Law has a disused rail tunnel running through it",
+	"we have more sunshine hours than any other city in Scotland"
+]
+bot.dialog('/loadSecret', [
+	function (session, args) {
+		session.send(secretss[Math.floor(Math.random()*secretss.length)]);
+		setTimeout(function () {
+			session.endDialog();
+		}, 3000);
+	}
+]);
 
 bot.dialog('/answerQuestion.quest', [
 	function (session, args) {
@@ -642,4 +627,39 @@ bot.dialog('/askMemory', [
 
 function ResetForSession(session) {
 	session.userData.questionCount = 0;
+}
+global.ResetData = function (session) {
+	
+	session.conversationData.hello = false;
+	session.conversationData.messageStack = [];
+	session.conversationData.test = "PFDSFDF";
+	session.userData.questionCount = 0;
+	session.userData.count = 0;
+		session.userData.name = null;
+		session.userData.dundonian = {};
+		session.userData.livingInDundee = {};
+		session.userData.usedQuestions = [];
+		session.userData.knowsWhatsUp = false;
+		session.userData.askedAQuestion = false;
+        session.userData.questionCount = 0;
+}
+function Init(session) {
+	console.log("init");
+		console.log(session.message.address);
+	session.conversationData.init = true;
+	session.conversationData.hello = false;
+	session.conversationData.messageStack = [];
+	session.conversationData.test = "PFDSFDF";
+	session.userData.questionCount = 0;
+	session.userData.count = 0;
+	if (!session.userData.name) {
+		session.userData.name = null;
+		session.userData.dundonian = {};
+		session.userData.livingInDundee = {};
+		session.userData.usedQuestions = [];
+		session.userData.knowsWhatsUp = false;
+		session.userData.askedAQuestion = false;
+	}
+	session.save();
+	console.log("end init");
 }

@@ -11,8 +11,12 @@ module.exports.init = function () {
     bot.dialog('/beginning/intro',
         [
             function (session, args) {
-                session.send("So " + session.userData.name + ", would you like to know what I'm up to?");
-                prompts.beginConfirmDialog(session);
+                if (!session.userData.knowsWhatsUp) {
+                    session.send("So " + session.userData.name + ", would you like to know what I'm up to?");
+                    prompts.beginConfirmDialog(session);
+                } else {
+                    session.replaceDialog('/beginning/answerQuestionsAlt');
+                }    
             },
             function (session, args, next) {
                 if (args.response == 1) {
@@ -21,9 +25,11 @@ module.exports.init = function () {
                 } else {
                     session.beginDialog("/beginning/firstRefusal")
                 }
+            },function (session, args, next) {
+                session.endDialog();
             }
         ]
-    )
+    ).triggerAction({ matches: /^INT/ }); 
 
     bot.dialog('/beginning/rejoin',
         [
@@ -38,7 +44,9 @@ module.exports.init = function () {
                     session.send("This is getting awkward...");
                     setTimeout(function () { session.beginDialog('/beginning/secondRefusal'); }, 3000);
                 }
-            },
+            },function (session, args, next) {
+                session.endDialog();
+            }
         ]
     )
     
@@ -50,12 +58,35 @@ module.exports.init = function () {
             }, 
             function (session, args, next) {
                 if (args.response == 1) {
-                    session.beginDialog('/beginning/doQuestions');
+                    if (!session.userData.knowsWhatsUp) {
+                        session.beginDialog('/beginning/doQuestions');
+                    } else {
+                        session.beginDialog("/questions/intro");
+                    }    
                 } else {
                     session.send("This is getting awkward...");
                     setTimeout(function () { session.beginDialog('/beginning/secondRefusal') }, 3000);
                 }
-            },
+            },function (session, args, next) {
+                session.endDialog();
+            }
+        ]
+    )
+    bot.dialog('/beginning/answerQuestionsAlt',
+        [
+            function (session, args) {
+                session.send("Do you want to answer some questions?")
+                prompts.beginConfirmDialog(session);
+            }, 
+            function (session, args, next) {
+                if (args.response == 1) {
+                    session.beginDialog("/questions/intro");
+                } else {
+                    session.beginDialog('/beginning/secondRefusal');
+                }
+            },function (session, args, next) {
+                session.endDialog();
+            }
         ]
     )
     bot.dialog('/beginning/doQuestions',
@@ -66,11 +97,14 @@ module.exports.init = function () {
             }, 
             function (session, args, next) {
                 session.send("But I reserve the right to not use them, or to reword them slightly...")
-			    setTimeout(next, 4000);
+			    setTimeout(next, 5000);
             },
             function (session, args, next) {
                 session.send("Okay! Let's start!")
+                session.userData.knowsWhatsUp = true;
                 setTimeout(function () { session.beginDialog("/questions/intro"); }, 4000);
+            },function (session, args, next) {
+                session.endDialog();
             }
         ]
     )
@@ -83,9 +117,12 @@ module.exports.init = function () {
             function (session, args, next) {
                 if (args.response == 1) {
                     session.send("Good. Let's get started.");
+                    setTimeout(function () { session.beginDialog("/beginning/doQuestions"); }, 4000);
                 } else {
                     session.beginDialog("/beginning/secondRefusal")
                 }
+            },function (session, args, next) {
+                session.endDialog();
             }
         ]
     )
@@ -98,10 +135,12 @@ module.exports.init = function () {
             function (session, args, next) {
                 if (args.response == 1) {
                     //TODO: Grab a thought
-                    session.send("TODO<second refusal>");
+                    session.beginDialog('/displayThought');
                 } else {
                     session.beginDialog("/beginning/thirdRefusal")
                 }
+            },function (session, args, next) {
+                session.endDialog();
             }
         ]
     )
@@ -109,63 +148,71 @@ module.exports.init = function () {
     bot.dialog('/beginning/thirdRefusal',
         [
             function (session, args) {
+                console.log(session.dialogStack());
                 session.send("Ok. I feel like we got off on the wrong footing, shall we start over?")
                 prompts.beginConfirmDialog(session);
             },
             function (session, args, next) {
+                console.log("thied 2");
                 if (args.response == 1) {
-                    //TODO: Check flow of dialogs
-                    session.beginDialog("/beginning/intro")
+                    next();
                 } else {
                     session.beginDialog("/beginning/breakTime")
                 }
+            },
+            function (session, args, next) {
+                console.log("thied 2");
+                session.endDialog();
+                session.beginDialog("/beginning/intro")
             }
         ]
-    )
+    ).triggerAction({ matches: /^BREAK/ }); 
+    function Wait(sesh, nxt) {
+        sesh.userData.waiting = true;
+        var cont = false;
+    }
+
+    function breaktime(session, count) {
+        if (session.userData.waiting == true && count < 6) {
+            switch (count) {
+                case 0:
+                    session.send("Bye.");
+                    break;
+                case 1:
+                    session.send("Still there?");
+                    break;
+                case 2:
+                    session.send("That was a hint to leave...");
+                    break;
+                case 3:
+                    session.send("go");
+                    break;
+                case 4:
+                    session.send("Go!");
+                    break;
+                case 5:
+                    session.send("But come back if you want to talk.");
+                    break;                    
+            }
+            timeDict[session.userData.name] = setTimeout(breaktime, 7000, session, count + 1);
+        }
+    }
+
+    
+
     bot.dialog('/beginning/breakTime',
         [
             function (session, args, next) {
-                //TODO: Break time                    
+                session.userData.waiting = true;                
                 session.send("Okay... Well I have to take my designated break now, so I'm just going to leave you here...");
-			    setTimeout(next, 3000);
+               // WaitForInput(session, 10000, function(){session.endDialogWithResult({ response: 1 }); });
+                prompts.beginTextDialog(session);
+                timeDict[session.userData.name] = setTimeout(breaktime, 4000, session, 0);
             },
             function (session, args, next) {
-                session.send("Bye.");
-			    setTimeout(next, 3000);
-            },
-            function (session, args, next) {
-                session.send("Still there?");
-			    setTimeout(next, 3000);
-            },
-            function (session, args, next) {
-                session.send("That was a hint to leave...");
-			    setTimeout(next, 3000);
-            },
-            function (session, args, next) {
-                session.send("go");
-			    setTimeout(next, 3000);
-            },
-            function (session, args, next) {
-                session.send("Go!");
-			    setTimeout(next, 3000);
-            },
-            function (session, args, next) {
-                session.send("But come back if you want to talk.");
-			    setTimeout(next, 3000);
-            },
-            function (session, args, next) {
-                //TODO: Photo
-                session.send("Here's a photo of a pot hole.");
-			    setTimeout(next, 3000);
-            },
-            function (session, args, next) {
-                session.send(":(");
-			    setTimeout(next, 3000);
-            },
-            function (session, args, next) {
-                session.send("Does it make you angry?");
-			    setTimeout(next, 3000);
+                clearTimeout(timeDict[session.userData.name]);
+                session.endDialog();
             }
         ]
-    )    
+    )
 }
