@@ -4,6 +4,7 @@ const dialogs = [
     '/fallback/thought',
     '/fallback/music',
     '/fallback/questionFlow',
+    '/fallback/questionFlow',
   //  '/fallback/answer',
     '/fallback/question'
 ];

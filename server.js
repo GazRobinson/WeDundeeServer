@@ -224,7 +224,7 @@ bot.dialog('/', [
 			if (!session.conversationData.hello) {
 				session.beginDialog('/confirmIdentity');
 			} else {
-				if (session.userData.questionCount < 3) {
+				if (!session.userData.knowsAboutQuestions || !session.userData.knowsWhatsUp || session.userData.questionCount < 1) {
 					session.beginDialog('/beginning/intro');
 				} else {
 					var randum = dialogs.fallback.getRandom();

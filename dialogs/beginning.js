@@ -208,7 +208,7 @@ module.exports.init = function () {
                 session.send("Okay... Well I have to take my designated break now, so I'm just going to leave you here...");
                // WaitForInput(session, 10000, function(){session.endDialogWithResult({ response: 1 }); });
                 prompts.beginTextDialog(session);
-                timeDict[session.userData.name] = setTimeout(breaktime, 4000, session, 0);
+                timeDict[session.userData.name] = setTimeout(breaktime, 8000, session, 0);
             },
             function (session, args, next) {
                 clearTimeout(timeDict[session.userData.name]);
