@@ -1,7 +1,7 @@
 const config = require('./config.js')
 require('./connectorSetup.js')();
 require('dotenv').config()
-
+global.questionsLoaded = false;
 global.prompts = require('./dialogs/prompts.js');
 const defaultDialog = require('./dialogs/default.js')
 var dialogs = {};
@@ -224,8 +224,12 @@ bot.dialog('/', [
 			if (!session.conversationData.hello) {
 				session.beginDialog('/confirmIdentity');
 			} else {
-				var randum = dialogs.fallback.getRandom();
-				session.beginDialog(randum);
+				if (session.userData.questionCount < 3) {
+					session.beginDialog('/beginning/intro');
+				} else {
+					var randum = dialogs.fallback.getRandom();
+					session.beginDialog(randum);
+				}	
 			}	
 		}		
 	}
@@ -310,7 +314,7 @@ bot.dialog('/confirmIdentity', [
 			session.conversationData.hello = true;
                 session.send('Hello %s, nice to meet you!', session.userData.name);
                 //setTimeout(function () { session.beginDialog('/location'); }, 3000);
-                setTimeout(function () { session.beginDialog('/beginning/intro'); }, 3000);
+                setTimeout(function () { session.beginDialog('/beginning/intro'); }, 5000);
             }, function (session, args) {
                 console.log("end intro");
                 session.endDialog();
@@ -356,7 +360,8 @@ bot.dialog('/intro/confirmName',
 //PROFILE
 bot.dialog('/profile', [
 	function (session, args) {
-		builder.Prompts.text(session, 'Welcome to We Dundee, can I ask your name please? :)');
+		CW = dialogs.weather.GetCurrentWeather();
+		builder.Prompts.text(session, 'Welcome to We Dundee, where it is currently '+ CW.temperature + ' degrees and ' + CW.summary.toLowerCase() + '. Can I ask your name please? :)');
 	},
 	function (session, results) {
 		session.userData.name = results.response;
@@ -411,6 +416,7 @@ bot.dialog('/displayThought',
 						setTimeout(function () { session.send('"' + posts[0].content + '"') }, 3000);
 					}	
 				}
+				session.endDialog();
 			});
 		}
 	]
@@ -563,11 +569,11 @@ bot.dialog('/askQuestion', [
 
 bot.dialog('/answerQuestion', [
 	function (session, args) {
-		session.send(greets.getPositiveResponse() + "! Okay, let's see here...");
+		session.send(greets.getPositiveResponse() + "! Heads up! These are unmoderated right now so there might be a dev message!");
 		setTimeout(function () {
 			GetBackendQuestion(function (quest) { session.beginDialog('/answerQuestion.quest', { questionData: quest }); });
 
-		}, 3000);
+		}, 7000);
 	}
 ]);
 //TODO: Remove
@@ -640,6 +646,7 @@ global.ResetData = function (session) {
 		session.userData.livingInDundee = {};
 		session.userData.usedQuestions = [];
 		session.userData.knowsWhatsUp = false;
+		session.userData.knowsAboutQuestions = false;
 		session.userData.askedAQuestion = false;
         session.userData.questionCount = 0;
 }
@@ -652,13 +659,9 @@ function Init(session) {
 	session.conversationData.test = "PFDSFDF";
 	session.userData.questionCount = 0;
 	session.userData.count = 0;
+	session.userData.finishedQuestions = false;
 	if (!session.userData.name) {
-		session.userData.name = null;
-		session.userData.dundonian = {};
-		session.userData.livingInDundee = {};
-		session.userData.usedQuestions = [];
-		session.userData.knowsWhatsUp = false;
-		session.userData.askedAQuestion = false;
+		global.ResetData();
 	}
 	session.save();
 	console.log("end init");

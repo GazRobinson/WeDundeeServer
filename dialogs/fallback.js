@@ -3,7 +3,7 @@ const dialogs = [
     '/fallback/picture',
     '/fallback/thought',
     '/fallback/music',
-    '/fallback/answer',
+  //  '/fallback/answer',
     '/fallback/question'
 ];
 
@@ -91,6 +91,20 @@ module.exports.init = function () {
                 session.endDialog();
                 console.log(session.dialogStack());
             }    
+        }
+    ]);
+
+
+    bot.dialog('/fallback/questionFlow', [
+        function (session, args) {
+            if (!session.userData.finishedQuestions) {
+                session.beginDialog('/beginning/answerQuestionsAlt');
+            } else {
+                session.beginDialog('/fallback/answer');
+            }
+        },
+        function (session, args) {
+                session.endDialog();
         }
     ]);
 

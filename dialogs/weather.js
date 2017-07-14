@@ -11,6 +11,14 @@ module.exports.GetCurrentWeather = function () {
     return currentForecast.currently;
 }
 
+function refreshWeather(forecast) {
+    forecast.get([56.4620, -3.1069149], function (err, weather) {
+        if (err) return console.dir(err);
+        currentForecast = weather;
+        setTimeout(refreshWeather, 3600000, forecast);
+    });	 
+}
+
 module.exports.init = function () {
     
     //FORECAST
@@ -25,10 +33,7 @@ module.exports.init = function () {
     }
     })
 
-    forecast.get([56.4620, -3.1069149], function (err, weather) {
-        if (err) return console.dir(err);
-        currentForecast = weather;
-    });	    
+    refreshWeather(forecast);    
 
     //WEATHER
     bot.dialog('weather',

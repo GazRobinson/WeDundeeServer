@@ -25,13 +25,85 @@ function AnswerQuestion(id, currentAnswers, newAnswers){
 	);
 }
 var ref;
+var timeoutMessages = [
+    "Please stand by...",
+    "Please stand by...",
+    "This is probably Google's fault.",
+    "Let me find a joke.",
+    "Okay Here it is.",
+    "Why did the chicken cross the road?",
+    "...",
+    "I'll give you a second",
+    "...",
+    "ERROR: ANSWER NOT LOADED. PLEASE STAND BY",
+    "That was the joke",
+    "Sorry",
+    "...",
+    "Wow, still here?",
+    "Is the internet on?",
+    "Did you check, or are you just saying it is?",
+    "Look, we're going to be here a while.",
+    "I'd get another joke but my connection to the mainframe is down",
+    "Let's play Rock, Paper, Scissors",
+    "Go on the next message",
+    "ROCK",
+    "...",
+    "I can't see. Did I win?",
+    "Are you lying?",
+    "...",
+    "I'm thinking of a number between 0 and 65535",
+    "Take a guess, if you're right, I'll give you a prize",
+    "Just say it out loud... now",
+    "...",
+    "Okay that was a practice run...",
+    "Wow. Google's still down, huh?",
+    "Keep typing stuff, maybe you'll crash the server"
+
+]
+//global.qTime;
+function LoadQLoop() {
+    LoadAllQs();
+    global.qTime = setTimeout(function() {
+        if (!global.questionsLoaded) {
+            ref.off();
+            console.log("TRYING AGAIN");
+            LoadQLoop();
+    } 
+    }, 60000);
+}
+
 module.exports.init = function () {
     ref = db.ref("server/bot-data/questions");
-    LoadAllQs();
-
+    LoadQLoop();
     bot.dialog('/questions/intro',
         [
             function (session, args, next) {
+                if (qArray.length < 1) {
+                    if (args && args.waiting) {   
+                        count = args.count;
+                        if (count < timeoutMessages.length) {
+                            session.send(timeoutMessages[count]);
+                        } else {
+                            session.send(timeoutMessages[0]);                            
+                        }
+                    } else {
+                        session.send("I'm just hooking into the mainframe to bring you fresh questions. Please stand by...");
+                        count = 1;
+                    }
+                    timeDict[session.userData.name] = setTimeout(function () {
+                        session.replaceDialog('/questions/intro', {waiting:true, count:++count});
+                    }, 5500, session);
+                    return;
+                } else {      
+                    if (args && args.waiting) {
+                        session.send("Okay! We're back on track!");  
+                        clearTimeout(timeDict[session.userData.name]);
+                        setTimeout(function () {
+                            session.replaceDialog('/questions/intro');
+                        }, 4000, session);
+                        return;
+                    }                        
+                }
                 console.log("starting question: " + session.userData.questionCount);
                 console.log(session.userData.usedQuestions);
                 var tempQArray = JSON.parse(JSON.stringify(qArray));
@@ -55,10 +127,14 @@ module.exports.init = function () {
                     session.userData.questionCount++;
                     session.beginDialog(nextQ);
                 } else {
+	                session.userData.finishedQuestions = true;
                     next();
                 }    
             }, function (session, args, next) {
-
+                if (session.userData.finishedQuestions) {
+                    next();
+                    return;
+                }
                 if (session.userData.questionCount < 3) {
                     session.replaceDialog("/questions/intro");
                 } else {
@@ -66,6 +142,8 @@ module.exports.init = function () {
                         session.beginDialog("/questions/another");
                     } else {
                         session.send("Wow! You got through all the questions I have!");
+	                    session.userData.finishedQuestions = true;
+                        session.userData.questionCount = 5;
                         setTimeout(function () { session.beginDialog('/questions/askAQuestion'); }, 4000);
                     }    
                 }    
@@ -99,6 +177,7 @@ module.exports.init = function () {
                     session.beginDialog(nextQ);
                 } else {
                     session.send("Wait! Sorry! I'm all out of questions apparently :(");
+	                session.userData.finishedQuestions = true;
                     setTimeout(function () { session.beginDialog('/questions/askAQuestion'); }, 4000);
                 }    
             }
@@ -151,9 +230,10 @@ var qArray = [];
 
 function LoadAllQs() {
     console.log("LOADING QUESTIONS");
-    ref.on("value", function(snapshot) {
-        
+    ref.on("value", function (snapshot) {
+        clearTimeout(global.qTime);
         console.log("QUESTIONS LOADED");
+        global.questionsLoaded = true;
 		ref.off("value");
 
 	    var obj_keys = Object.keys(snapshot.val());

@@ -21,6 +21,7 @@ module.exports.init = function () {
             function (session, args, next) {
                 if (args.response == 1) {
                     session.send("We Dundee is taking names and information about Dundee so we can let the world find out what we do here.");
+                    session.userData.knowsWhatsUp = true;
                     setTimeout(function () { session.beginDialog('/beginning/answerQuestions'); }, 5000);
                 } else {
                     session.beginDialog("/beginning/firstRefusal")
@@ -58,13 +59,13 @@ module.exports.init = function () {
             }, 
             function (session, args, next) {
                 if (args.response == 1) {
-                    if (!session.userData.knowsWhatsUp) {
+                    if (!session.userData.knowsAboutQuestions) {
                         session.beginDialog('/beginning/doQuestions');
                     } else {
                         session.beginDialog("/questions/intro");
                     }    
                 } else {
-                    session.send("This is getting awkward...");
+                    session.send("Awkward...");
                     setTimeout(function () { session.beginDialog('/beginning/secondRefusal') }, 3000);
                 }
             },function (session, args, next) {
@@ -101,7 +102,7 @@ module.exports.init = function () {
             },
             function (session, args, next) {
                 session.send("Okay! Let's start!")
-                session.userData.knowsWhatsUp = true;
+                session.userData.knowsAboutQuestions = true;
                 setTimeout(function () { session.beginDialog("/questions/intro"); }, 4000);
             },function (session, args, next) {
                 session.endDialog();
