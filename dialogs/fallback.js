@@ -3,6 +3,7 @@ const dialogs = [
     '/fallback/picture',
     '/fallback/thought',
     '/fallback/music',
+    '/fallback/questionFlow',
   //  '/fallback/answer',
     '/fallback/question'
 ];
