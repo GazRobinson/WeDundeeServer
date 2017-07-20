@@ -24,8 +24,7 @@ module.exports = function () {
     }).triggerAction({ matches: 'question.facility' });
 
     bot.dialog('/question.facility.DCA', [function (session, args) {        
-            session.send("Dundee Contemporary Arts Gallery is in the west end of Dundee and has a a gallery, cinema, shop, cafe and print studio. Would you like to visit their website?");
-			prompts.beginConfirmDialog(session, {skip:false});
+			prompts.beginConfirmDialog(session, {questionText: "Dundee Contemporary Arts Gallery is in the west end of Dundee and has a a gallery, cinema, shop, cafe and print studio. Would you like to visit their website?", skip:false});
     }, function (session, args) {
         if (args.response == 1) {
             session.beginDialog('/otherSite');

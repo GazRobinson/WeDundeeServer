@@ -29,8 +29,7 @@ module.exports.init = function () {
 
     bot.dialog('/fallback/picture', [
         function (session, args) {
-            session.send("Would you like to see a picture of Dundee?");
-			prompts.beginConfirmDialog(session, {skip:true});
+			prompts.beginConfirmDialog(session, {questionText:"Would you like to see a picture of Dundee?",  skip:true});
         },
         function (session, args) {
             console.log("We got here at least");
@@ -50,8 +49,7 @@ module.exports.init = function () {
 
     bot.dialog('/fallback/thought', [
         function (session, args) {
-            session.send('Wanna hear a thought from the city?');
-			prompts.beginConfirmDialog(session, {skip:true});
+			prompts.beginConfirmDialog(session, {questionText: 'Wanna hear a thought from the city?', skip:true});
         },
         function (session, args) {
             if (args.response == 1) {
@@ -66,8 +64,7 @@ module.exports.init = function () {
 
     bot.dialog('/fallback/music', [
         function (session, args) {
-            session.send('Maybe we could listen to some music?');
-			prompts.beginConfirmDialog(session, {skip:true});
+			prompts.beginConfirmDialog(session, {questionText: 'Maybe we could listen to some music?', skip:true});
         },
         function (session, args) {
             if (args.response == 1) {
@@ -82,8 +79,7 @@ module.exports.init = function () {
 
     bot.dialog('/fallback/answer', [
         function (session, args) {
-            session.send('Hey! Maybe you wanna answer a question about the city for me?');
-			prompts.beginConfirmDialog(session, {skip:true});
+			prompts.beginConfirmDialog(session, {questionText: 'Hey! Maybe you wanna answer a question about the city for me?',skip:true});
         },
         function (session, args) {
             if (args.response == 1) {
@@ -112,8 +108,7 @@ module.exports.init = function () {
 
     bot.dialog('/fallback/question', [
         function (session, args) {
-            session.send('Do you have an obscure question for someone about the city?');
-			prompts.beginConfirmDialog(session, {skip:true});
+			prompts.beginConfirmDialog(session, {questionText: 'Do you have an obscure question for someone about the city?',skip:true});
         },
         function (session, args) {
             if (args.response == 1) {

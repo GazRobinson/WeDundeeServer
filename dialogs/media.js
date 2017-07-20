@@ -49,8 +49,7 @@ module.exports.init = function () {
     bot.dialog('/media/requestPicture', [
         function (session, args) {        
     		global.address = session.message.address;
-            session.send("I'm thinking of showing people images of the city like this. Would you have on I could use?");  
-            prompts.beginConfirmDialog(session);
+            prompts.beginConfirmDialog(session, {questionText: "I'm thinking of showing people images of the city like this. Would you have on I could use?"});
             global.currentSession = session;
             setTimeout(function () { var results = imageSearch('Dundee', args ? args.callback : defaultImageCallback, 0, 1);}, 3000);	                  
         },

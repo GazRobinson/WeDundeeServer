@@ -12,7 +12,6 @@ module.exports.init = function () {
         [
             function (session, args) {
                 if (!session.userData.knowsWhatsUp) {
-                    //session.send("So " + session.userData.name + ", would you like to know what I'm up to?");
                     prompts.beginConfirmDialog(session, {questionText: "So " + session.userData.name + ", would you like to know what I'm up to?"});
                 } else {
                     session.replaceDialog('/beginning/answerQuestionsAlt');
@@ -35,8 +34,7 @@ module.exports.init = function () {
     bot.dialog('/beginning/rejoin',
         [
             function (session, args) {
-                session.send("So do you want to answer some questions?")
-                prompts.beginConfirmDialog(session);
+                prompts.beginConfirmDialog(session, {questionText: "So do you want to answer some questions?"});
             }, 
             function (session, args, next) {
                 if (args.response == 1) {
@@ -54,8 +52,7 @@ module.exports.init = function () {
     bot.dialog('/beginning/answerQuestions',
         [
             function (session, args) {
-                session.send("So do you want to answer some questions now?")
-                prompts.beginConfirmDialog(session);
+                prompts.beginConfirmDialog(session, {questionText: "So do you want to answer some questions now?"});
             }, 
             function (session, args, next) {
                 if (args.response == 1) {
@@ -76,13 +73,13 @@ module.exports.init = function () {
     bot.dialog('/beginning/answerQuestionsAlt',
         [
             function (session, args) {
-                session.send("Do you want to answer some questions?")
-                prompts.beginConfirmDialog(session);
+                prompts.beginConfirmDialog(session, {questionText:"Do you want to answer some questions?"});
             }, 
             function (session, args, next) {
                 if (args.response == 1) {
                     session.beginDialog("/questions/intro");
                 } else {
+                    session.userData.questionCount += 1;
                     session.beginDialog('/beginning/secondRefusal');
                 }
             },function (session, args, next) {
@@ -112,8 +109,7 @@ module.exports.init = function () {
     bot.dialog('/beginning/firstRefusal',
         [
             function (session, args) {
-                session.send("Okay... Shall I just get to the bit where I ask you questions?")
-                prompts.beginConfirmDialog(session);
+                prompts.beginConfirmDialog(session, {questionText:"Okay... Shall I just get to the bit where I ask you questions?"});
             },
             function (session, args, next) {
                 if (args.response == 1) {
@@ -130,8 +126,7 @@ module.exports.init = function () {
     bot.dialog('/beginning/secondRefusal',
         [
             function (session, args) {
-                session.send("Okay... Well would you like to know something that someone said once about the city?")
-                prompts.beginConfirmDialog(session);
+                prompts.beginConfirmDialog(session, {questionText:"Okay... Well would you like to know something that someone said once about the city?"});
             },
             function (session, args, next) {
                 if (args.response == 1) {
@@ -150,8 +145,7 @@ module.exports.init = function () {
         [
             function (session, args) {
                 console.log(session.dialogStack());
-                session.send("Ok. I feel like we got off on the wrong footing, shall we start over?")
-                prompts.beginConfirmDialog(session);
+                prompts.beginConfirmDialog(session, {questionText: "Ok. I feel like we got off on the wrong footing, shall we start over?"});
             },
             function (session, args, next) {
                 console.log("thied 2");
@@ -163,8 +157,8 @@ module.exports.init = function () {
             },
             function (session, args, next) {
                 console.log("thied 2");
+                    session.send("You're back!");
                 session.endDialog();
-                session.beginDialog("/beginning/intro")
             }
         ]
     ).triggerAction({ matches: /^BREAK/ }); 
@@ -216,4 +210,51 @@ module.exports.init = function () {
             }
         ]
     )
+
+    bot.dialog('/beginning/picture',
+        [
+            function (session, args) {
+
+			console.log(session.dialogStack());
+                prompts.beginConfirmDialog(session, {questionText: "Oh, are you here to upload a picture?"});                
+            },
+            function (session, args, next) {
+                console.log(session.dialogStack());
+                if (args.response == 1) {
+                    session.beginDialog('/beginning/uploadPicture');
+                } else {
+                    session.send("Maybe another time then!");
+                    global.Wait(session, function () { console.log("END");session.endDialog(); }, 4000); 
+                }
+            },function (session, args, next) {
+                session.endDialog();
+            }
+        ]
+    ); 
+
+    bot.dialog('/beginning/uploadPicture',
+        [
+            function (session, args) {
+                prompts.beginConfirmDialog(session, {questionText: "Cool! We don't actually have a way for you to give me a picture just yet, but I can give you an email address to send them to, if you want?"});  
+            },
+            function (session, args, next) {
+                if (args.response == 1) {
+                    session.beginDialog('/beginning/emailPicture');
+                } else {
+                    session.send("Maybe another time then!");
+                    global.Wait(session, function () { session.endDialog(); }, 4000);                    
+                }
+            },function (session, args, next) {
+                session.endDialog();
+            }
+        ]
+    ); 
+     bot.dialog('/beginning/emailPicture',
+        [
+            function (session, args) {
+                session.send("The address is... Well, I don't actually have this either. Give me a few days!");
+                session.endDialog();
+            }
+        ]
+    ); 
 }

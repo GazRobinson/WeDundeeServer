@@ -46,11 +46,9 @@ module.exports.init = function () {
                         session.endDialog();
                     } else {
                         session.send(getWeather());
-                       // prompts.beginConfirmDialog(session);
                     }
                 } else {
                     session.send(getWeather());
-                   // prompts.beginConfirmDialog(session);
                 }
             }
         ]

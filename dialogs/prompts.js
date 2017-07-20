@@ -25,7 +25,6 @@ exports.init = function (bot) {
 var builder = require('botbuilder');
 exports.beginConfirmDialog = function (session, options) {
     console.log('Do Confirm');
-    global.stopTimer();
     session.beginDialog('/prompts/confirm', options || {});
 }
 
@@ -33,17 +32,20 @@ exports.createConfirmDialog = function (bot, recog) {
     var allowSkip = false;
     var unsureResponse;
     var prompt = new builder.IntentDialog({ recognizers: [recog] })
-        .onBegin(function (session, args) {
-            
-            if (args.questionText) {
-                session.dialogData.qText = args.questionText;
+        .onBegin(function (session, args) {        
+            session.dialogData.qText = args.questionText;
+            session.dialogData.prompt = args.prompt || args.questionText;
+            if (args.repeat) {
+                session.send(session.dialogData.prompt);                
+            } else {
                 session.send(session.dialogData.qText);
-            }
+            }    
+
             unsureResponse = args.unsureResponse || getNonUnderstand();
-            allowSkip = false;
+            session.dialogData.allowSkip = false;
             if (args) {
                 if (args.skip) {
-                    allowSkip = args.skip;
+                    session.dialogData.allowSkip = args.skip;
                 }    
             }    
         })
@@ -54,7 +56,14 @@ exports.createConfirmDialog = function (bot, recog) {
             session.endDialogWithResult({ response: 0 , type: "confirm"});
         })
         .matches('intent.dontKnow', function (session, args) {
-            session.endDialogWithResult({ response: 2 , type: "confirm"});
+            if (session.dialogData.allowSkip) {
+                session.endDialogWithResult({ response: 2 , type: "confirm"});
+            } else {
+                session.send(unsureResponse || "Please answer yes or no! I'm still learning!");
+                timeDict[session.message.address.conversation.id] = setTimeout(function () { 
+                session.replaceDialog('/prompts/confirm', {questionText:session.dialogData.qText, prompt:session.dialogData.prompt, repeat: true})
+            }, 5000);
+            }
         })
         .matches('gratitude', function (session, args) {
             session.send("Don't mention it!");
@@ -64,11 +73,14 @@ exports.createConfirmDialog = function (bot, recog) {
         })
         .onDefault(function (session, args) {
             console.log(args);
-            if (allowSkip) {
+            if (session.dialogData.allowSkip) {
                 console.log("Allow skip");
                 session.endDialogWithResult({ response: -1 });
             } else {
-                session.send(unsureResponse);
+                session.send(unsureResponse || "Please answer yes or no! I'm still learning!");
+                timeDict[session.message.address.conversation.id] = setTimeout(function () { 
+                session.replaceDialog('/prompts/confirm', {questionText:session.dialogData.qText, prompt:session.dialogData.prompt, repeat: true})
+            }, 5000);
             }    
         });
     bot.dialog('/prompts/confirm', prompt);

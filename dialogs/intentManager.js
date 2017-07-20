@@ -20,8 +20,7 @@ module.exports = function () {
     ]).triggerAction({ matches: 'question.location' });
 
 bot.dialog('/question.location.dundee', [function (session, args) {
-    session.send('Dundee is on the east coast of Scotland, it sits facing south on the bank of the River Tay or the silvery Tay as people like to call it. Would you like to see a picture?');
-    prompts.beginConfirmDialog(session);
+    prompts.beginConfirmDialog(session, {questionText: 'Dundee is on the east coast of Scotland, it sits facing south on the bank of the River Tay or the silvery Tay as people like to call it. Would you like to see a picture?'});
  },
     function (session, args) {
         if (args.response == 1) {
@@ -33,8 +32,7 @@ bot.dialog('/question.location.dundee', [function (session, args) {
     }]
 );    
 bot.dialog('/question.location.england', [function (session, args) {
-    session.send("Do you want me to show you a map?");
-    prompts.beginConfirmDialog(session);
+    prompts.beginConfirmDialog(session, {questionText: "Do you want me to show you a map?"});
  },
     function (session, args) {
         if (args.response == 1) {

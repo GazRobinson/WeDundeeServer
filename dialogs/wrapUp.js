@@ -2,8 +2,7 @@
 module.exports.init = function () {
     bot.dialog('/wrapUp/oneMore', [
         function (session, args) {
-            session.send("Oh well. Can I ask you one last question?");
-            prompts.beginConfirmDialog(session);
+            prompts.beginConfirmDialog(session, {questionText: "Oh well. Can I ask you one last question?"});
         },
         function (session, args, next) {
             if (args.response == 1) {
@@ -24,8 +23,7 @@ module.exports.init = function () {
             setTimeout(next, 5000);
         },
         function (session, args, next) {
-            session.send("Would you like to leave some feedback?");
-            prompts.beginConfirmDialog(session);
+            prompts.beginConfirmDialog(session, {questionText: "Would you like to leave some feedback?"});
         },
         function (session, args, next) {
             if (args.response == 1) {

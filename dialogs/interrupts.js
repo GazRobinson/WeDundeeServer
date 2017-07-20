@@ -50,10 +50,6 @@ module.exports = function () {
             console.log(args);    
         session.beginDialog('/gratitude');
     } });
-        // toast
-    bot.dialog('tast', function (session) {
-        session.beginDialog("/culturalPlace/root");
-    }).triggerAction({ matches: /^toast/ });
 
     //Greeting
     bot.dialog('/greeting', [function (session, args, next)
@@ -118,31 +114,7 @@ module.exports = function () {
 		}
 ]
     ).triggerAction({ matches: /^Stop Music/i });
-/*
-bot.dialog('/toast',
-	[
-		function (session, args) {
-			
-            session.send('A');
-            console.log("A");
-            session.beginDialog('/toast2');
-        },
-        function (session, args) {
-			
-            session.send('B');
-            console.log("B");
-		}
-]
-    ).triggerAction({ matches: /^toast/i });
-    bot.dialog('/toast2',
-        [
-            function (session, args) {
-            session.send('C');
-            console.log("C");
-            session.endDialog();    
-            }
-        ]
-    );*/
+
     bot.dialog('/interrupt',
 	[
         function (session, args) {
@@ -167,8 +139,26 @@ bot.dialog('/toast',
             session.send(getRandomThanks());
         }
     ]
-    ).triggerAction({ matches: 'gratitude' });    
+    ).triggerAction({ matches: 'gratitude',
+        onSelectAction: (session, args, next) => {    
+        session.beginDialog('/thanks');
+            }
+        });    
 
+     bot.dialog('/botInquire',
+    [
+        function (session, args) {
+            session.send("I am not allowed to answer questions about myself, it’s company policy.");
+            timeDict[session.message.address.conversation.id] = setTimeout(function () { 
+                session.endDialog();
+            }, global.defaultTime);
+        }
+    ]
+    ).triggerAction({ matches: 'intent.inquireAboutBot',
+        onSelectAction: (session, args, next) => {    
+        session.beginDialog('/botInquire');
+             }
+         });  
     bot.dialog('/population',
         [
             function (session, args, next) {
@@ -176,8 +166,7 @@ bot.dialog('/toast',
                 setTimeout(next, 10000);
             }, 
             function (session, args, next) {            
-                session.send('Would you like to know the population density?');
-                prompts.beginConfirmDialog(session, {skip:true});
+                prompts.beginConfirmDialog(session, {questionText: 'Would you like to know the population density?', skip:true});
             },
             function (session, args, next) {
                 if (args.response == 1) {

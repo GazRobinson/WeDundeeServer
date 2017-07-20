@@ -45,13 +45,11 @@ bot.dialog('weather',
 					session.send("Why do you want to know about that place! :'(");
 					session.endDialog();
 				} else {
-					session.send("What a nice day it is again, isn't it?");
-					prompts.beginConfirmDialog(session);
+					prompts.beginConfirmDialog(session, {questionText: "What a nice day it is again, isn't it?"});
 				}
 			} else
 			{
-				session.send("What a nice day it is again, isn't it?");
-					prompts.beginConfirmDialog(session);
+					prompts.beginConfirmDialog(session, {questionText: "What a nice day it is again, isn't it?"});
 			}	
 		},
 		function (session, args) {
@@ -158,8 +156,7 @@ bot.dialog('/genericQuestion', [
 //askUserAQuestion
 bot.dialog('/askUserAQuestion', [
 	function (session, args) {
-		session.send("Can I ask you a question?");
-		prompts.beginConfirmDialog(session);
+		prompts.beginConfirmDialog(session, {questionText: "Can I ask you a question?"});
 			
 	},
 	function (session, args) {
@@ -185,13 +182,11 @@ bot.dialog('/askUserAQuestion', [
 bot.dialog('/location',
 	[
 		function (session, args) {
-			session.send("So... Are you a native Dundonian?");
-			prompts.beginConfirmDialog(session);
+			prompts.beginConfirmDialog(session, {questionText: "So... Are you a native Dundonian?"});
 		},
 		function (session, results) {
 			session.userData.dundonian = results.response;
-			session.send("And are you living in Dundee now?");
-			prompts.beginConfirmDialog(session);
+			prompts.beginConfirmDialog(session, {questionText: "And are you living in Dundee now?"});
 		},
 		function (session, results) {
 			session.userData.livingInDundee = results.response;
@@ -282,8 +277,7 @@ bot.dialog('/answerQuestion', [
 
 bot.dialog('/askMemory', [
     function (session, args) {
-		session.send("Do you have any fond memories of Dundee?");
-		prompts.beginConfirmDialog(session);		
+		prompts.beginConfirmDialog(session, {questionText: "Do you have any fond memories of Dundee?"});		
     },
 	function (session, results) {
 		if (results.response) {

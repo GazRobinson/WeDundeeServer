@@ -31,15 +31,8 @@ var wordpress = require('wordpress');
 var admin = require("firebase-admin");
 
 var serviceAccount = require("./wedundeebot-firebase-adminsdk-ibkp7-c6ba8d1dd7.json");
-var idleTimer;
-const idleTime = 10000;
-global.stopTimer = function () {
-	clearTimeout(idleTimer);
-}
-global.startTimer = function () {
-	clearTimeout(idleTimer);	
-//	idleTimer = setTimeout(reactToIdle, idleTime);
-}
+
+global.idleTime = 10000;
 
 admin.initializeApp({
 	credential: admin.credential.cert(serviceAccount),
@@ -53,15 +46,7 @@ global.SendMessage = function (session, message) {
 	session.conversationData.messageStack.push(message);
 	session.send(message);
 }
-global.WaitForResponse = function (session, functionCall, t) {	
-	session.dialogData.responded = false;
-	setTimeout(function (responded)
-	{
-		if (!responded) {
-			functionCall();
-		}
-	}, t, session.dialogData.responded);
-}
+
 module.exports.db = db = admin.database();
 var ref = db.ref("server/saving-data/questions");
 
@@ -216,14 +201,16 @@ bot.dialog('/inactive', [
 ]);
 var timeout;
 //ROOT
-bot.dialog('/', [	
-	function (session, args, next) {	
+bot.dialog('/', 	
+	[function (session, args, next) {			
+		global.IdleStop(session);
 		if (!session.userData.name) {
 			if (!args || !args.greeting) {
 				session.beginDialog("/root/introductions")
 			} else {
 				session.beginDialog('/intro');				
-			}	
+			}		
+			return;
 		} else {
 			if (!session.conversationData.hello) {
 				session.beginDialog('/confirmIdentity');
@@ -231,19 +218,29 @@ bot.dialog('/', [
 				if ((!session.userData.knowsAboutQuestions && !session.userData.knowsWhatsUp )|| session.userData.questionCount < 1) {
 					session.beginDialog('/beginning/intro');
 				} else {
-					var randum = dialogs.fallback.getRandom();
-					session.beginDialog(randum);
+					if (session.dialogStack().length < 2) {
+						console.log("Small talk time!");
+						var randum = dialogs.fallback.getRandom();
+						session.beginDialog(randum);
+					} else {
+						console.log("Trying to idle with a stack");
+						console.log(session.dialogStack());
+					}	
 				}	
 			}	
-		}		
-	}
-]);
+			return;
+		}
+	},
+	function (session, args, next) {	
+		console.log("We have fallen back to the root");
+		global.IdleWait(session, function () { session.replaceDialog('/'); });
+	}	
+	]
+);
 
 bot.dialog('/root/introductions', [	
 	function (session, args, next) {	
-		session.send("I feel like I hardly know you yet. Why don't we do some introductions?");
-
-		prompts.beginConfirmDialog(session);		
+		prompts.beginConfirmDialog(session, {questionText: "I feel like I hardly know you yet. Why don't we do some introductions?"});		
 	},
 	function (session, args, next) {
 		console.log(args);
@@ -262,6 +259,7 @@ function check(val) {
 var doneIntro = false;
 
 global.timeDict = {};
+global.globalTimeDict = {};
 
 global.WaitForInput = function(session, time, func) {
 	timeDict[session.userData.name] = setTimeout(func, time);        
@@ -272,11 +270,11 @@ bot.dialog('/confirmIdentity', [
 		ResetForSession(session);
 		console.log("Confirm");
 		console.log(session.message.address);
-		session.send("Welcome back " + session.userData.name + " it's nice to see your face again! Are you still " + session.userData.name + "?");
 		prompts.beginConfirmDialog(session, {
 			skip: false,
 			questionText: "Welcome back " + session.userData.name + " it's nice to see your face again! Are you still " + session.userData.name + "?",
-			unsureResponse: "You don't know if you're you? Are you " + session.userData.name + "??"
+			unsureResponse: "You don't know if you're you?",
+			prompt: "Are you still " + session.userData.name + "?"
 		});
 	},
 	function (session, args, next) {
@@ -284,18 +282,20 @@ bot.dialog('/confirmIdentity', [
 			session.send("Lovely. It's good to have you back!");
 			session.conversationData.hello = true;
 			//global.startTimer();
-			session.endDialog();
-			setTimeout(function () { session.beginDialog('/beginning/intro'); }, 4000);
+			console.log(session.dialogStack());
+			//session.endDialog();
+			if (session.userData.usedQuestions.length > 2) {
+				console.log(session.dialogStack());
+				setTimeout(function () { session.beginDialog('/beginning/picture'); }, 5000);				
+			} else {
+				setTimeout(function () { session.beginDialog('/beginning/intro'); }, 5000);
+			}	
 				
 		} else {
 			session.send("My mistake, you looked like somebody else. This is awkward...")
-
-			setTimeout(next, 3000);
+			global.ResetData(session);
+			setTimeout(function () { session.beginDialog('/intro'); }, 5000);
 		}
-	},
-	function (session, args, next) {
-		session.send("Let's start over!");
-		setTimeout(function () { session.beginDialog('/intro'); }, 3000);
 	}
 ]
 );
@@ -332,16 +332,14 @@ bot.dialog('/intro/confirmName',
 		//TODO: better handling
 		function (session, args) {
 			var split = session.userData.name.split(' ');
-			session.send("Can I just call you " + split[0] + "?");
-			prompts.beginConfirmDialog(session);
+			prompts.beginConfirmDialog(session, {questionText: "Can I just call you " + split[0] + "?"});
 		},
 		function (session, args, next) {
 			if (args.response == 1) {
 				session.userData.name = session.userData.name.split(' ')[0];
 				session.endDialog();
 			} else {
-				session.send("Well how about " + session.userData.name.split(' ')[1] + "?");
-				prompts.beginConfirmDialog(session);
+				prompts.beginConfirmDialog(session, {questionText: "Well how about " + session.userData.name.split(' ')[1] + "?"});
 			}
 		},
 		function (session, args, next) {
@@ -349,8 +347,7 @@ bot.dialog('/intro/confirmName',
 				session.userData.name = session.userData.name.split(' ')[1];
 				session.endDialog();
 			} else {
-				session.send("Ok then. I am just going to call you 'Human'... You are human aren't you?");
-				prompts.beginConfirmDialog(session);
+				prompts.beginConfirmDialog(session, {questionText: "Ok then. I am just going to call you 'Human'... You are human aren't you?"});
 			}
 		},
 		function (session, args, next) {
@@ -366,12 +363,10 @@ bot.dialog('/intro/confirmName',
 		function (session, args, next) {
 			if (!args.type) {
 				if (args.text && args.text.match(/chat bot\?/ig)) {
-					session.send("I can’t tell you, it’s classified. Are you a chat bot?");
-					prompts.beginConfirmDialog(session);
+					prompts.beginConfirmDialog(session, {questionText: "I can’t tell you, it’s classified. Are you a chat bot?"});
 					return;
 				} else {
-					session.send("Eh? Are you a chat bot?");	
-					prompts.beginConfirmDialog(session);				
+					prompts.beginConfirmDialog(session, {questionText: "Eh? Are you a chat bot?"});				
 				}
 			} else {
 				next(args);
@@ -572,17 +567,9 @@ bot.dialog('/location',
 				session.endDialog();
 				session.beginDialog('/genericQuestion');
 			} else {
-				//session.send("So... Are you a native Dundonian?");
-				//prompts.beginConfirmDialog(session);
-				session.send("So " + session.userData.name + ", are you living in Dundee now?");
-				prompts.beginConfirmDialog(session);
+				prompts.beginConfirmDialog(session, {questionText: "So " + session.userData.name + ", are you living in Dundee now?"});
 			}
 		},
-		/*	function (session, results) {
-				session.userData.dundonian = results.response;
-				session.send("And are you living in Dundee now?");
-				prompts.beginConfirmDialog(session);
-			},*/
 		function (session, results) {
 			session.userData.livingInDundee = results.response;
 			if (session.userData.livingInDundee) {
@@ -591,18 +578,6 @@ bot.dialog('/location',
 				session.send("Well then, feel free to ask me questions about the city and I'll try to answer them.");
 				session.endDialog();
 			}
-			/*	if (session.userData.dundonian && session.userData.livingInDundee) {
-					session.send("Can't bear to leave?");
-					session.beginDialog('/answerQuestion');
-				} else if(session.userData.dundonian && !session.userData.livingInDundee) {
-					session.send("Couldn't stand it any longer?");
-					session.beginDialog('/askMemory');
-				} else if(!session.userData.dundonian && session.userData.livingInDundee) {
-					session.send("Welcome to Dundee!");
-				} else if(!session.userData.dundonian && !session.userData.livingInDundee) {
-					session.send("Well what brings you here?");
-					session.beginDialog('/askQuestion');
-				}*/
 		}
 	]
 );
@@ -611,7 +586,7 @@ bot.dialog('/location',
 bot.dialog('/location.permission', [
 	function (session, args) {
 		session.send("Can I ask you some questions?");
-		prompts.beginConfirmDialog(session, { allowSkip: true });
+		prompts.beginConfirmDialog(session, { questionText: "Can I ask you some questions?", allowSkip: true });
 	},
 	function (session, args) {
 		if (args.response == 1) {
@@ -630,9 +605,6 @@ bot.dialog('/location.permission', [
 
 
 ////////END DIALOGS///////
-
-
-
 bot.dialog('/askQuestion', [
 	function (session, args) {
 		session.send("Ask away!");
@@ -696,8 +668,7 @@ var currentQuestionID;
 var currentQuestion;
 bot.dialog('/askMemory', [
 	function (session, args) {
-		session.send("Do you have any fond memories of Dundee?");
-		prompts.beginConfirmDialog(session);
+		prompts.beginConfirmDialog(session, {questionText: "Do you have any fond memories of Dundee?"});
 	},
 	function (session, results) {
 		if (results.response) {
@@ -743,4 +714,17 @@ function Init(session) {
 	}
 	session.save();
 	console.log("end init");
+}
+
+global.Wait = function (session, func, time) {
+	timeDict[session.message.address.conversation.id] = setTimeout(func, time|| global.defaultTime);
+}
+global.IdleWait = function (session, func, time) {
+	global.globalTimeDict[session.message.address.conversation.id] = setTimeout(func, time|| global.idleTime);
+}
+global.IdleStop = function (session) {
+	if (global.globalTimeDict[session.message.address.conversation.id]) {
+		clearTimeout(
+			global.globalTimeDict[session.message.address.conversation.id]);
+	}	
 }

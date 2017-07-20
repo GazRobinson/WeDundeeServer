@@ -1,17 +1,3 @@
-/*
-bot.dialog('/questions/coffeeRoot', [
-        function (session, args) {
-            session.send("Do you like coffee?");
-            prompts.beginConfirmDialog(session);
-        },
-        function (session, args, next) {
-            if (args.response == 1) {
-            } else {
-            }
-        }
-    ]);
-*/
-
 
 function AnswerQuestion(id, currentAnswers, newAnswers){
 	var keyyyy = id+"/responses";
@@ -190,8 +176,7 @@ module.exports.init = function () {
         [
             function (session, args, next) {
                 if (!session.userData.askedAQuestion) {
-                    session.send("Do you have a question about the city you've always wanted to ask?");
-                    prompts.beginConfirmDialog(session);
+                    prompts.beginConfirmDialog(session, {questionText: "Do you have a question about the city you've always wanted to ask?"});
                 } else {
                     session.endDialog();
                 }
@@ -210,12 +195,13 @@ module.exports.init = function () {
     bot.dialog('/questions/another',
         [
             function (session, args, next) {
+                var msg = "";
                 if (session.userData.questionCount == 3) {
-                    session.send("I know I said only three questions, but how about another?");
+                    msg = "I know I said only three questions, but how about another?";
                 } else {
-                    session.send("How about another one?");
+                    msg = "How about another one?";
                 }
-                prompts.beginConfirmDialog(session);
+                prompts.beginConfirmDialog(session, {questionText: msg});
             },
             function (session, args, next) {
                 if (args.response == 1) {
@@ -330,8 +316,7 @@ function CreateDialog(rootKeyName, thisKeyName, qData) {
         bot.dialog("/" + rootKeyName + "/" + thisKeyName,
             [
                 function (session, args) {
-                    session.send(qData.text);
-                    prompts.beginConfirmDialog(session);
+                    prompts.beginConfirmDialog(session, {questionText: qData.text});
                 },
                 function (session, args, next) {
                     if (args.response == 1) {
