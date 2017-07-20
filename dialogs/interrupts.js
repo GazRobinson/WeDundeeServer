@@ -20,13 +20,44 @@ module.exports = function () {
         session.endDialog();
     }).triggerAction({ matches: /^help/i });
 
+    bot.dialog('/website', function (session, args) {
+        session.send("WEBSITE: " + args.url);
+        session.endDialog();
+    });
+
     // ROOT
     bot.dialog('ROOT', function (session) {
         session.beginDialog('/');
     }).triggerAction({ matches: /^ROOT/ });
 
+    //Gratitude
+    bot.dialog('/gratitude', [function (session, args, next) {
+        console.log("DOH DOH DOH DOH");
+        session.send("You're welcome!");
+        //session.endDialog();
+    }
+
+    ]
+    ).triggerAction({
+        matches: 'gratitude',
+        onInterrupted: function (session) {
+        console.log("poops");
+            session.send('Please provide a destination');
+        },
+        onSelectAction: (session, args, next) => {
+        // Add the help dialog to the dialog stack 
+        // (override the default behavior of replacing the stack)
+            console.log(args);    
+        session.beginDialog('/gratitude');
+    } });
+        // toast
+    bot.dialog('tast', function (session) {
+        session.beginDialog("/culturalPlace/root");
+    }).triggerAction({ matches: /^toast/ });
+
     //Greeting
-    bot.dialog('/greeting', [function (session, args, next) {
+    bot.dialog('/greeting', [function (session, args, next)
+    {
         console.log(session.userData);
         if (!session.userData.name) {
             session.beginDialog('/', { greeting: true });
@@ -42,11 +73,8 @@ module.exports = function () {
             }
         }
     }
-
     ]
     ).triggerAction({ matches: 'greeting' });
-       
-
     
     //ShowMe
     bot.dialog('/showThought',
@@ -134,12 +162,12 @@ bot.dialog('/toast',
     );
 
     bot.dialog('/thanks',
-        [
-            function (session, args) {
-                session.send(getRandomThanks());
-            }
+    [
+        function (session, args) {
+            session.send(getRandomThanks());
+        }
     ]
-        ).triggerAction({ matches: 'gratitude' });    
+    ).triggerAction({ matches: 'gratitude' });    
 
     bot.dialog('/population',
         [

@@ -299,10 +299,15 @@ function CreateDialog(rootKeyName, thisKeyName, qData) {
                                     var reg = args.text.match(expected[i].answer[j]);
                                     console.log(reg);
                                     if (reg && reg.length > 0) {
-                                        session.dialogData.solved = true;
-                                        session.send(expected[i].response);
-                                        setTimeout(function () { session.endDialog(); }, 6000);
-                                        return;
+                                        if (!expected[i].responseDialog) {
+
+                                            session.dialogData.solved = true;
+                                            session.send(expected[i].response);
+                                            setTimeout(function () { session.endDialog(); }, 6000);
+                                            return;
+                                        } else {
+                                            session.beginDialog("/" + rootKeyName + "/" + expected[i].responseDialog);
+                                        }    
                                     }
                                 }
                             }                            
@@ -350,5 +355,13 @@ function CreateDialog(rootKeyName, thisKeyName, qData) {
                 }
             ]                    
         ) 
-    }     
+    }   else if (qData.type == "link") {
+        bot.dialog("/" + rootKeyName + "/" + thisKeyName,
+            [
+                function (session, args) {
+                    session.beginDialog(qData.dialog, qData.args);  
+                }
+            ]                    
+        ) 
+    }  
 }

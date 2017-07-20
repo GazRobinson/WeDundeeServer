@@ -159,6 +159,10 @@ bot.on('conversationUpdate', function (message) {
 		});
 	} else {
 		var add = message.address;
+		if (timeDict[add.conversation.id] != null) {
+			clearTimeout(timeDict[add.conversation.id]);
+			console.log("Clear timeout");
+		}
 		add = {
 			id: add.conversation.id + '|0000002',
 			channelId: 'directline',
@@ -345,30 +349,104 @@ bot.dialog('/intro/confirmName',
 				session.userData.name = session.userData.name.split(' ')[1];
 				session.endDialog();
 			} else {
-				session.send("Well what shall I call you?");
-				prompts.beginTextDialog(session);
+				session.send("Ok then. I am just going to call you 'Human'... You are human aren't you?");
+				prompts.beginConfirmDialog(session);
 			}
 		},
 		function (session, args, next) {
-			if (args.text) {
-				session.userData.name = args.text;
-			} 
-			session.endDialog();
+			if (args.response == 1) {
+				session.userData.name = 'Human';
+				session.send("Phew, you can't be too careful, there are a lot of chat bots around these days...");
+				session.endDialog();
+			} else {
+				session.send("Are you a chat bot?");
+				prompts.beginMultiDialog(session);
+			}
+		},
+		function (session, args, next) {
+			if (!args.type) {
+				if (args.text && args.text.match(/chat bot\?/ig)) {
+					session.send("I can’t tell you, it’s classified. Are you a chat bot?");
+					prompts.beginConfirmDialog(session);
+					return;
+				} else {
+					session.send("Eh? Are you a chat bot?");	
+					prompts.beginConfirmDialog(session);				
+				}
+			} else {
+				next(args);
+			}				
+		},
+		function (session, args, next) {
+			
+			if (args.type && args.type == "confirm") {
+				if (args.response == 1) {
+					session.send("Ok. I will call you 'Bot'... Your secret's safe with me ;)");
+					session.userData.name = 'Bot';
+					session.endDialog();
+				} else {
+					session.send("Ok. I will call you 'Lifeform'.");
+					session.userData.name = 'Lifeform';
+					session.endDialog();
+				}
+			}			
 		}
 	]
 )
+
+
+global.defaultTime = 3000;
 //PROFILE
 bot.dialog('/profile', [
-	function (session, args) {
+	function (session, args, next) {
 		CW = dialogs.weather.GetCurrentWeather();
-		builder.Prompts.text(session, 'Welcome to We Dundee, where it is currently '+ CW.temperature + ' degrees and ' + CW.summary.toLowerCase() + '. Can I ask your name please? :)');
+		session.send('Welcome to We Dundee, where it is currently '+ CW.temperature + ' degrees and ' + CW.summary.toLowerCase() + '.');
+		
+		timeDict[session.message.address.conversation.id] = setTimeout(function () { next(CW); }, global.defaultTime);
+	},
+	function (session, args, next) {
+		summary = CW.summary.toLowerCase();
+		msg = "";
+		if (summary.includes("sunny") || summary.includes("clear")) {
+			msg = "Of course it is! It's always like that here ;)";
+		} else {
+			msg = "Hmmmm... That can't be right. Anyway...";
+		}
+		session.send(msg);
+		timeDict[session.message.address.conversation.id] = setTimeout(function () { next(); }, global.defaultTime);
+	},
+	function (session, args) {
+		session.beginDialog('/askName');
 	},
 	function (session, results) {
-		session.userData.name = results.response;
+		session.userData.name = results.text;
 
 		session.endDialog();
 	}
 ]);
+
+bot.dialog('/askName',
+	[
+		function (session, args) {	
+			args = args || {};
+			prompts.beginMultiDialog(session, { text: args.text || 'So, can I ask your name please?' });
+		},
+	function (session, args, next) {
+		if (args.type && args.type == "confirm") {
+			if (args.response == 1) {
+				prompts.beginTextDialog(session, { text: 'Well, what is it then?' });				
+			} else if (args.response == 0) {
+				session.replaceDialog('/askName', { text: "Oh go on! Please?" });
+				return
+			}
+		} else {
+			next(args);
+		}
+	},
+	function (session, args) {
+		session.endDialogWithResult(args);
+	}
+])
 
 //SMALLTALK
 bot.dialog('/smallTalk', [
@@ -661,7 +739,7 @@ function Init(session) {
 	session.userData.count = 0;
 	session.userData.finishedQuestions = false;
 	if (!session.userData.name) {
-		global.ResetData();
+		global.ResetData(session);
 	}
 	session.save();
 	console.log("end init");

@@ -4,6 +4,23 @@ called once at startup and then beginDialog() can be called everytime you
 wish to invoke the prompt.
 -----------------------------------------------------------------------------*/
 
+exports.init = function (bot) {
+    // ROOT
+    bot.dialog('textPrompt2', [
+        function (session, args) {
+            if (args.response) {
+                session.send(args.question);
+            } else {
+                next(args);
+            }    
+    }, function (session, args) {
+        session.beginDialog('/');
+    },
+    ]
+        
+    ).triggerAction({ matches: /^PIE/ });
+}
+
 ////CUSTOM CONFIRM
 var builder = require('botbuilder');
 exports.beginConfirmDialog = function (session, options) {
@@ -20,8 +37,6 @@ exports.createConfirmDialog = function (bot, recog) {
             
             if (args.questionText) {
                 session.dialogData.qText = args.questionText;
-            }
-            if (args.repeat) {
                 session.send(session.dialogData.qText);
             }
             unsureResponse = args.unsureResponse || getNonUnderstand();
@@ -33,13 +48,19 @@ exports.createConfirmDialog = function (bot, recog) {
             }    
         })
         .matches('positiveResponse', function (session, args) {
-            session.endDialogWithResult({ response: 1 });
+            session.endDialogWithResult({ response: 1 , type: "confirm"});
         })
         .matches('negativeResponse', function (session, args) {
-            session.endDialogWithResult({ response: 0 });
+            session.endDialogWithResult({ response: 0 , type: "confirm"});
         })
         .matches('intent.dontKnow', function (session, args) {
-            session.endDialogWithResult({ response: 2 });
+            session.endDialogWithResult({ response: 2 , type: "confirm"});
+        })
+        .matches('gratitude', function (session, args) {
+            session.send("Don't mention it!");
+            timeDict[session.message.address.conversation.id] = setTimeout(function () { 
+                session.replaceDialog('/prompts/confirm', {questionText:session.dialogData.qText, repeat: true})
+            }, 3500);
         })
         .onDefault(function (session, args) {
             console.log(args);
@@ -54,8 +75,7 @@ exports.createConfirmDialog = function (bot, recog) {
 }
 //ambiguous
 exports.beginMultiDialog = function (session, options) {
-    console.log('Do Confirm');
-    global.stopTimer();
+    console.log(options);
     session.beginDialog('/prompts/multi', options || {});
 }
 
@@ -63,7 +83,10 @@ exports.createMultiDialog = function (bot, recog) {
     var unsureResponse;
     var prompt = new builder.IntentDialog({ recognizers: [recog] })
         .onBegin(function (session, args) {
-            
+            if (args.text) {
+                args.questionText = args.text;
+                args.repeat = true;
+            }
             if (args.questionText) {
                 session.dialogData.qText = args.questionText;
             }
@@ -115,6 +138,9 @@ exports.createTextDialog = function (bot, recog) {
     var botResponse;
     var prompt = new builder.IntentDialog({ recognizers: [recog] })
         .onBegin(function (session, args) {
+            if (args.text) {
+                session.send(args.text);
+            }    
             botResponse = args;
         })
         .matches('intent.dontKnow', function (session) {

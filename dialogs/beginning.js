@@ -12,8 +12,8 @@ module.exports.init = function () {
         [
             function (session, args) {
                 if (!session.userData.knowsWhatsUp) {
-                    session.send("So " + session.userData.name + ", would you like to know what I'm up to?");
-                    prompts.beginConfirmDialog(session);
+                    //session.send("So " + session.userData.name + ", would you like to know what I'm up to?");
+                    prompts.beginConfirmDialog(session, {questionText: "So " + session.userData.name + ", would you like to know what I'm up to?"});
                 } else {
                     session.replaceDialog('/beginning/answerQuestionsAlt');
                 }    
