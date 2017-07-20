@@ -491,9 +491,8 @@ bot.dialog('/displayThought',
 						setTimeout(function () { session.send('"' + posts[0].content + '"') }, 3000);
 					}	
 				}
-				global.Wait(session, function () {					
-				session.endDialog();
-				}, 10000
+				global.Wait(session, function () { session.endDialog();}, 10000);
+				
 			});
 		}
 	]
