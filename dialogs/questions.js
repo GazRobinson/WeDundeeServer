@@ -185,9 +185,15 @@ module.exports.init = function () {
                 if (args.response == 1) {
                     session.beginDialog('/askQuestion');
                 } else {
-                    session.send("You must know a lot about Dundee!");
-                    session.endDialog();
+                    session.send("I guess you must already know everything!");
+                    global.Wait(session, next);
                 }
+            },
+            function (session, args, next) {
+                session.beginDialog('/picture/root');
+            },
+            function (session, args, next) {
+                session.endDialog();
             }
         ]
     );

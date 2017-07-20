@@ -23,6 +23,8 @@ dialogs.intro = require('./dialogs/intro.js');
 dialogs.intro.init();
 dialogs.refusal = require('./dialogs/refusal.js');
 dialogs.refusal.init();
+dialogs.picture = require('./dialogs/picture.js');
+dialogs.picture.init();
 
 require('./dialogs/intentManager.js')();
 require('./intents/questionFacilities.js')();
@@ -32,7 +34,7 @@ var admin = require("firebase-admin");
 
 var serviceAccount = require("./wedundeebot-firebase-adminsdk-ibkp7-c6ba8d1dd7.json");
 
-global.idleTime = 10000;
+global.idleTime = 5000;
 
 admin.initializeApp({
 	credential: admin.credential.cert(serviceAccount),
@@ -286,7 +288,7 @@ bot.dialog('/confirmIdentity', [
 			//session.endDialog();
 			if (session.userData.usedQuestions.length > 2) {
 				console.log(session.dialogStack());
-				setTimeout(function () { session.beginDialog('/beginning/picture'); }, 5000);				
+				setTimeout(function () { session.beginDialog('/picture/picture'); }, 5000);				
 			} else {
 				setTimeout(function () { session.beginDialog('/beginning/intro'); }, 5000);
 			}	
@@ -390,7 +392,7 @@ bot.dialog('/intro/confirmName',
 )
 
 
-global.defaultTime = 3000;
+global.defaultTime = 6500;
 //PROFILE
 bot.dialog('/profile', [
 	function (session, args, next) {

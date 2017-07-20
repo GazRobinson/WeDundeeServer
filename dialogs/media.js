@@ -30,35 +30,73 @@ defaultImageCallback = function (results) {
     
 }
 
+nonDefaultImageCallback = function (results) {
+    console.log(results);
+	var msg = new builder.Message().address(global.address);
+    msg.text('Here you go!');
+    msg.textLocale('en-US');
+	msg.addAttachment({
+		contentType: "image/jpeg",
+		contentUrl: getPic(),
+		name: "Law"
+	});
+	bot.send(msg);    
+}
+
 module.exports.init = function () {
 
     bot.dialog('/showPicture', [function (session, args) {
         
-    		global.address = session.message.address;
             session.send("Hold on a second while I grab one for you...");
-            global.currentSession = session;
             console.log(session.dialogStack());
         
-            setTimeout(function () { var results = imageSearch('Dundee', args ? args.callback : defaultImageCallback, 0, 1);}, 3000);	                  
+            setTimeout(function (session) {            
+            var results = imageSearch(
+                'Dundee',
+                function (results) {
+                    console.log("RES");
+                    console.log(session);
+                    var msg = new builder.Message().address(session.message.address);
+                    msg.text('Here you go!');
+                    msg.textLocale('en-US');
+                    msg.addAttachment({
+                        contentType: "image/jpeg",
+                        contentUrl: getPic(),
+                        name: "Law"
+                    });
+                    bot.send(msg);
+                    session.beginDialog("/displayPicture");
+                }, 0, 1
+                );
+        }, 3000, session);	                  
         },
         function (session, args) {
-            session.endDialog();
+            setTimeout(function () {
+                session.endDialog();
+            }, 5000);
         }
     ]
     );  
     bot.dialog('/media/requestPicture', [
-        function (session, args) {        
-    		global.address = session.message.address;
-            prompts.beginConfirmDialog(session, {questionText: "I'm thinking of showing people images of the city like this. Would you have on I could use?"});
-            global.currentSession = session;
-            setTimeout(function () { var results = imageSearch('Dundee', args ? args.callback : defaultImageCallback, 0, 1);}, 3000);	                  
+        function (session, args) {            
+            var results = imageSearch(
+                'Dundee',
+                function (results) {
+                    console.log(results);
+                    var msg = new builder.Message().address(session.message.address);
+                    msg.textLocale('en-US');
+                    msg.addAttachment({
+                        contentType: "image/jpeg",
+                        contentUrl: getPic(),
+                        name: "Law"
+                    });
+                    bot.send(msg);
+                    session.beginDialog("/displayPicture");
+                }, 0, 1
+                );
         },
         function (session, args, next) {
-            if (args.response == 1) {
-                session.beginDialog("/media/emailPic");
-            } else {
-                session.beginDialog("/wrapUp/oneMore");
-            }
+                session.endDialog();
         }
     ]
     ); 

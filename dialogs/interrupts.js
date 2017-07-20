@@ -93,9 +93,15 @@ module.exports = function () {
                         session.beginDialog('/playMusic');
                     }
                 }
+            },
+            function (session, args) {
+                session.endDialog();
             }
         ]
-    ).triggerAction({ matches: 'showMe' });
+    ).triggerAction({ matches: 'showMe',
+        onSelectAction: (session, args, next) => {    
+        session.beginDialog('/showThought', args);
+             } });
 
     bot.dialog('/stopMusic',
 	[

@@ -41,7 +41,7 @@ module.exports.init = function () {
                     session.beginDialog('/beginning/doQuestions');
                 } else {
                     session.send("This is getting awkward...");
-                    setTimeout(function () { session.beginDialog('/beginning/secondRefusal'); }, 3000);
+                    setTimeout(function () { session.beginDialog('/beginning/secondRefusal'); }, 5000);
                 }
             },function (session, args, next) {
                 session.endDialog();
@@ -63,7 +63,7 @@ module.exports.init = function () {
                     }    
                 } else {
                     session.send("Awkward...");
-                    setTimeout(function () { session.beginDialog('/beginning/secondRefusal') }, 3000);
+                    setTimeout(function () { session.beginDialog('/beginning/secondRefusal') }, 5000);
                 }
             },function (session, args, next) {
                 session.endDialog();
@@ -100,7 +100,7 @@ module.exports.init = function () {
             function (session, args, next) {
                 session.send("Okay! Let's start!")
                 session.userData.knowsAboutQuestions = true;
-                setTimeout(function () { session.beginDialog("/questions/intro"); }, 4000);
+                setTimeout(function () { session.beginDialog("/questions/intro"); }, 5000);
             },function (session, args, next) {
                 session.endDialog();
             }
@@ -114,7 +114,7 @@ module.exports.init = function () {
             function (session, args, next) {
                 if (args.response == 1) {
                     session.send("Good. Let's get started.");
-                    setTimeout(function () { session.beginDialog("/beginning/doQuestions"); }, 4000);
+                    setTimeout(function () { session.beginDialog("/beginning/doQuestions"); }, 5000);
                 } else {
                     session.beginDialog("/beginning/secondRefusal")
                 }
@@ -210,51 +210,5 @@ module.exports.init = function () {
             }
         ]
     )
-
-    bot.dialog('/beginning/picture',
-        [
-            function (session, args) {
-
-			console.log(session.dialogStack());
-                prompts.beginConfirmDialog(session, {questionText: "Oh, are you here to upload a picture?"});                
-            },
-            function (session, args, next) {
-                console.log(session.dialogStack());
-                if (args.response == 1) {
-                    session.beginDialog('/beginning/uploadPicture');
-                } else {
-                    session.send("Maybe another time then!");
-                    global.Wait(session, function () { console.log("END");session.endDialog(); }, 4000); 
-                }
-            },function (session, args, next) {
-                session.endDialog();
-            }
-        ]
-    ); 
-
-    bot.dialog('/beginning/uploadPicture',
-        [
-            function (session, args) {
-                prompts.beginConfirmDialog(session, {questionText: "Cool! We don't actually have a way for you to give me a picture just yet, but I can give you an email address to send them to, if you want?"});  
-            },
-            function (session, args, next) {
-                if (args.response == 1) {
-                    session.beginDialog('/beginning/emailPicture');
-                } else {
-                    session.send("Maybe another time then!");
-                    global.Wait(session, function () { session.endDialog(); }, 4000);                    
-                }
-            },function (session, args, next) {
-                session.endDialog();
-            }
-        ]
-    ); 
-     bot.dialog('/beginning/emailPicture',
-        [
-            function (session, args) {
-                session.send("The address is... Well, I don't actually have this either. Give me a few days!");
-                session.endDialog();
-            }
-        ]
-    ); 
+    
 }
