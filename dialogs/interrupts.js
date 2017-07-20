@@ -119,7 +119,10 @@ module.exports = function () {
 			//audio/mpeg3
 		}
 ]
-    ).triggerAction({ matches: /^Stop Music/i });
+    ).triggerAction({ matches: /^Stop Music/i,
+        onSelectAction: (session, args, next) => {    
+        session.beginDialog('/stopMusic');
+             } });
 
     bot.dialog('/interrupt',
 	[

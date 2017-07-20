@@ -380,12 +380,12 @@ bot.dialog('/intro/confirmName',
 				if (args.response == 1) {
 					session.send("Ok. I will call you 'Bot'... Your secret's safe with me ;)");
 					session.userData.name = 'Bot';
-					session.endDialog();
+					
 				} else {
 					session.send("Ok. I will call you 'Lifeform'.");
 					session.userData.name = 'Lifeform';
-					session.endDialog();
 				}
+				global.Wait(session, function () { session.endDialog(); });
 			}			
 		}
 	]
@@ -491,7 +491,9 @@ bot.dialog('/displayThought',
 						setTimeout(function () { session.send('"' + posts[0].content + '"') }, 3000);
 					}	
 				}
+				global.Wait(session, function () {					
 				session.endDialog();
+				}, 10000
 			});
 		}
 	]
@@ -615,7 +617,9 @@ bot.dialog('/askQuestion', [
 	function (session, args) {
 		SaveQuestion(session.userData.name, args.text);
 		session.send("I'll save that one for later. Once I have more information I'll get back to you!");
-		session.endDialog();
+		global.Wait(session, function () {
+			session.endDialog();
+		});
 	}
 ]);
 
