@@ -233,12 +233,34 @@ bot.dialog('/',
 			return;
 		}
 	},
-	function (session, args, next) {	
-		console.log("We have fallen back to the root");
-		global.IdleWait(session, function () { session.replaceDialog('/'); });
+		function (session, args, next) {	
+			if (!session.userData.completed) {
+				console.log("We have fallen back to the root");
+				global.IdleWait(session, function () { session.replaceDialog('/'); });
+			} else {
+				Wait(session, function () {
+					session.beginDialog('/root/stillHere');
+				}, 25000)
+			}
 	}	
 	]
 );
+
+
+bot.dialog('/root/stillHere', [
+	function (session, args, next) {	
+		prompts.beginConfirmDialog(session, {questionText: "Still here, huh?"});		
+	},
+	function (session, args, next) {
+		console.log(args);
+		if (args.response == 1) {
+			session.send("Nice to have you around!");
+		} else {
+			session.send("Liar!");
+		}
+		global.IdleWait(session, function () { session.replaceDialog('/'); });
+	}
+]);
 
 bot.dialog('/root/introductions', [	
 	function (session, args, next) {	
@@ -272,15 +294,25 @@ bot.dialog('/confirmIdentity', [
 		ResetForSession(session);
 		console.log("Confirm");
 		console.log(session.message.address);
-		prompts.beginConfirmDialog(session, {
-			skip: false,
-			questionText: "Welcome back " + session.userData.name + " it's nice to see your face again! Are you still " + session.userData.name + "?",
-			unsureResponse: "You don't know if you're you?",
-			prompt: "Are you still " + session.userData.name + "?"
-		});
+		if (args) {
+			prompts.beginMultiDialog(session, {
+				skip: false,
+				text: args.q ,
+				unsureResponse: "You don't know if you're you?",
+				prompt: "Are you " + session.userData.name + "?"
+			});
+		}
+		else {
+			prompts.beginMultiDialog(session, {
+				skip: false,
+				text:  "Welcome back... " + session.userData.name + "?",
+				unsureResponse: "You don't know if you're you?",
+				prompt: "Are you " + session.userData.name + "?"
+			});
+		}	
 	},
 	function (session, args, next) {
-		if (args.response == 1) {
+		if (!args.type || (args.type == "confirm" && args.response == 1)) {
 			session.send("Lovely. It's good to have you back!");
 			session.conversationData.hello = true;
 			//global.startTimer();
@@ -288,16 +320,19 @@ bot.dialog('/confirmIdentity', [
 			//session.endDialog();
 			if (session.userData.usedQuestions.length > 2) {
 				console.log(session.dialogStack());
-				setTimeout(function () { session.beginDialog('/picture/picture'); }, 5000);				
+				setTimeout(function () { session.beginDialog('/picture/picture'); }, 5000);
 			} else {
 				setTimeout(function () { session.beginDialog('/beginning/intro'); }, 5000);
-			}	
+			}
 				
-		} else {
-			session.send("My mistake, you looked like somebody else. This is awkward...")
+		} else if (args.type == "confirm" && args.response == 0) {
+			session.send("Oh sorry! I thought you looked like " + session.userData.name + ". How embarrasing for them!");
 			global.ResetData(session);
 			setTimeout(function () { session.beginDialog('/intro'); }, 5000);
-		}
+		} else if (args.type == "confirm" && args.response == 2) {
+			session.replaceDialog('/confirmIdentity', { q: "Well? Are you " + session.userData.name + "?" });
+		} 
+
 	}
 ]
 );
@@ -318,7 +353,7 @@ bot.dialog('/confirmIdentity', [
 			function (session, results, next) {
 				
 			session.conversationData.hello = true;
-                session.send('Hello %s, nice to meet you!', session.userData.name);
+                session.send('Great! Nice to meet you %s!', session.userData.name);
                 //setTimeout(function () { session.beginDialog('/location'); }, 3000);
                 setTimeout(function () { session.beginDialog('/beginning/intro'); }, 5000);
             }, function (session, args) {
@@ -391,26 +426,80 @@ bot.dialog('/intro/confirmName',
 	]
 )
 
+function getWeatherIcon(icon) {
+	switch (icon) {
+		case "clear-day":
+			return "clear skies"			
+		case "clear-night":
+			return "dark skies"
+		case "rain":
+			return "raining :("
+		case "snow":
+			return "snowing! How exciting!"
+		case "sleet":
+			return "sleeting. Horrible."
+		case "wind":
+			return "quite windy"
+		case "fog":
+			return "foggy"
+		case "cloudy":
+			return "overcast"
+		case "partly-cloudy-day":
+			return "a wee bit cloudy"
+		case "partly-cloudy-night":
+			return "a wee bit cloudy"
+		default:
+			return "about what you'd expect to be honest"	
+	}
+}
+
+function getWeatherMood(icon) {
+	if (icon == "clear-day") {
+		return "good";
+	} else if (icon == "rain"||icon == "snow"||icon == "sleet"||icon == "wind"||icon == "fog"){
+		return "bad"
+	} else if (icon == "clear-night"||icon == "partly-cloudy-night"){
+		return "night"
+	} else {
+		return "ok"
+	}
+}
+
+
 
 global.defaultTime = 6500;
+global.weatherInfo = {icon:"cloudy"
+};
 //PROFILE
 bot.dialog('/profile', [
 	function (session, args, next) {
 		CW = dialogs.weather.GetCurrentWeather();
-		session.send('Welcome to We Dundee, where it is currently '+ CW.temperature + ' degrees and ' + CW.summary.toLowerCase() + '.');
+		weatherInfo.icon = CW.icon;
+		session.send('Welcome to We Dundee, where the weather is currently '+ CW.temperature + ' degrees and ' + getWeatherIcon(weatherInfo.icon));
 		
-		timeDict[session.message.address.conversation.id] = setTimeout(function () { next(CW); }, global.defaultTime);
+		timeDict[session.message.address.conversation.id] = setTimeout(function () { next({mood:getWeatherMood(weatherInfo.icon)}); }, 5000);
 	},
 	function (session, args, next) {
 		summary = CW.summary.toLowerCase();
 		msg = "";
-		if (summary.includes("sunny") || summary.includes("clear")) {
-			msg = "Of course it is! It's always like that here ;)";
-		} else {
-			msg = "Hmmmm... That can't be right. Anyway...";
+		console.log("Mood: " + args.mood);
+		switch (args.mood) {
+			case "good":
+				msg = "It’s always sunny in Dundee. ;)";	
+				break;	
+			case "ok":
+				msg = "Hmmm… a bit more sun would be nice.";		
+				break;
+			case "bad":
+				msg = "Ok. That’s doesn't sound great, hope you have a coat.";	
+				break;
 		}
 		session.send(msg);
 		timeDict[session.message.address.conversation.id] = setTimeout(function () { next(); }, global.defaultTime);
+	},
+	function (session, args, next) {
+		session.send("Anyway...");
+		Wait(session, next, 5000);
 	},
 	function (session, args) {
 		session.beginDialog('/askName');
@@ -426,12 +515,12 @@ bot.dialog('/askName',
 	[
 		function (session, args) {	
 			args = args || {};
-			prompts.beginMultiDialog(session, { text: args.text || 'So, can I ask your name please?' });
+			prompts.beginMultiDialog(session, { text: args.text || 'So, what is your name?', threshold: 0.75 });
 		},
 	function (session, args, next) {
 		if (args.type && args.type == "confirm") {
 			if (args.response == 1) {
-				prompts.beginTextDialog(session, { text: 'Well, what is it then?' });				
+				prompts.beginTextDialog(session, { text: 'Well, what is your name then?' });				
 			} else if (args.response == 0) {
 				session.replaceDialog('/askName', { text: "Oh go on! Please?" });
 				return
@@ -610,7 +699,7 @@ bot.dialog('/location.permission', [
 ////////END DIALOGS///////
 bot.dialog('/askQuestion', [
 	function (session, args) {
-		session.send("Ask away!");
+		session.send("What is it?");
 		prompts.beginTextDialog(session);
 	},
 	function (session, args) {
@@ -703,6 +792,7 @@ global.ResetData = function (session) {
 		session.userData.knowsAboutQuestions = false;
 		session.userData.askedAQuestion = false;
         session.userData.questionCount = 0;
+		session.userData.completed = false;
 }
 function Init(session) {
 	console.log("init");
@@ -714,6 +804,7 @@ function Init(session) {
 	session.userData.questionCount = 0;
 	session.userData.count = 0;
 	session.userData.finishedQuestions = false;
+		session.userData.completed = false;
 	if (!session.userData.name) {
 		global.ResetData(session);
 	}

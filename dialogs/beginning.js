@@ -21,7 +21,7 @@ module.exports.init = function () {
                 if (args.response == 1) {
                     session.send("We Dundee is taking names and information about Dundee so we can let the world find out what we do here.");
                     session.userData.knowsWhatsUp = true;
-                    setTimeout(function () { session.beginDialog('/beginning/answerQuestions'); }, 5000);
+                    setTimeout(function () { session.beginDialog('/beginning/siteDesign'); }, 5000);
                 } else {
                     session.beginDialog("/beginning/firstRefusal")
                 }
@@ -31,8 +31,42 @@ module.exports.init = function () {
         ]
     ).triggerAction({ matches: /^INT/ }); 
 
+    bot.dialog('/beginning/siteDesign',
+        [
+            function (session, args, next) {
+                if (!session.userData.knowsAboutQuestions) {
+                    prompts.beginConfirmDialog(session, { questionText: "This site looks a little bare don’t you think?" });
+                } else {
+                    next({ response: 1 });
+                }
+            },
+            function (session, args, next) {
+                if (args.response == 1) {
+                    prompts.beginConfirmDialog(session, { questionText: "Would you like a nice picture of Dundee in the background?" });
+                } else {
+                    session.send("Ok, I guess I just don’t like minimal design.")
+                    Wait(session, function () { next({ response: 0 }); }, 5000);
+                }
+            },function (session, args, next) {
+                if (args.response == 1) {
+                    session.beginDialog('/media/requestPicture');
+                } else {
+                    next();
+                }
+            }, function (session, args, next) {                
+                setTimeout(function () { session.beginDialog('/beginning/answerQuestions'); }, 5000);
+            }, function (session, args, next) {                
+                session.endDialog();
+            }
+        ]
+    ).triggerAction({ matches: /^INT/ }); 
+
     bot.dialog('/beginning/rejoin',
         [
+            function (session, args) {
+                session.send("First of all...");
+                global.Wait(session, function () { session.beginDialog('/beginning/siteDesign'); }, 4000);
+            }, 
             function (session, args) {
                 prompts.beginConfirmDialog(session, {questionText: "So do you want to answer some questions?"});
             }, 

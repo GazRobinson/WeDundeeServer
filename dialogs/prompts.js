@@ -95,6 +95,7 @@ exports.createMultiDialog = function (bot, recog) {
     var unsureResponse;
     var prompt = new builder.IntentDialog({ recognizers: [recog] })
         .onBegin(function (session, args) {
+            session.dialogData.scoreThreshold = args.threshold || scoreThreshold;
             if (args.text) {
                 args.questionText = args.text;
                 args.repeat = true;
@@ -114,21 +115,22 @@ exports.createMultiDialog = function (bot, recog) {
             }
         })
         .matches('positiveResponse', function (session, args) {
-            if (args.score > scoreThreshold){
+            console.log(args);
+            if (args.score > session.dialogData.scoreThreshold){
                 session.endDialogWithResult({ response: 1, type: "confirm" });
             } else{
                 session.endDialogWithResult({ response: -1, text: session.message.text });
             }
         })
         .matches('negativeResponse', function (session, args) {
-            if (args.score > scoreThreshold) {
+            if (args.score > session.dialogData.scoreThreshold) {
                 session.endDialogWithResult({ response: 0, type: "confirm" });
             } else{
                 session.endDialogWithResult({ response: -1, text: session.message.text });
             }
         })
         .matches('intent.dontKnow', function (session, args) {
-            if (args.score > scoreThreshold) {
+            if (args.score > session.dialogData.scoreThreshold) {
                 session.endDialogWithResult({ response: 2, type: "confirm" });
             } else{
                 session.endDialogWithResult({ response: -1, text: session.message.text });
@@ -139,7 +141,7 @@ exports.createMultiDialog = function (bot, recog) {
         });
     bot.dialog('/prompts/multi', prompt);
 }
-const scoreThreshold = 0.4;
+const scoreThreshold = 0.5;
 //CUSTOM TEXT
 exports.beginTextDialog = function (session, options) {
     console.log('Do Text');

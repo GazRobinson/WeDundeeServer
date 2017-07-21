@@ -176,7 +176,7 @@ module.exports.init = function () {
         [
             function (session, args, next) {
                 if (!session.userData.askedAQuestion) {
-                    prompts.beginConfirmDialog(session, {questionText: "Do you have a question about the city you've always wanted to ask?"});
+                    prompts.beginConfirmDialog(session, {questionText: "Ok before we go, do you have a question you would like to ask the people of Dundee?"});
                 } else {
                     session.endDialog();
                 }
@@ -186,11 +186,11 @@ module.exports.init = function () {
                     session.beginDialog('/askQuestion');
                 } else {
                     session.send("I guess you must already know everything!");
-                    global.Wait(session, next);
+                    global.Wait(session, function () { next({ bad: true}); });
                 }
             },
             function (session, args, next) {
-                session.beginDialog('/picture/root');
+                session.beginDialog('/picture/intro', args);
             },
             function (session, args, next) {
                 session.endDialog();
@@ -299,6 +299,7 @@ function CreateDialog(rootKeyName, thisKeyName, qData) {
                                             return;
                                         } else {
                                             session.beginDialog("/" + rootKeyName + "/" + expected[i].responseDialog);
+                                            return;
                                         }    
                                     }
                                 }
@@ -350,7 +351,7 @@ function CreateDialog(rootKeyName, thisKeyName, qData) {
         bot.dialog("/" + rootKeyName + "/" + thisKeyName,
             [
                 function (session, args) {
-                    session.beginDialog(qData.dialog, qData.args);  
+                    setTimeout(function () { session.beginDialog(qData.dialog, qData.args);  });                      
                 }
             ]                    
         ) 

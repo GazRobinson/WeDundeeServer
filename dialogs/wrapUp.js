@@ -15,12 +15,12 @@ module.exports.init = function () {
 
     bot.dialog('/wrapUp/goodbye', [
         function (session, args, next) {
-            session.send("Well I think that's everything! Good bye and thanks for your time!");
-            setTimeout(next, 5000);
+            session.send("Ok, I guess that all I have for you. Thanks for helping out and please follow We Dundee on Facebook to find out about changes we make here.");
+            global.Wait(session, next, 12000);
         },
         function (session, args, next) {
             session.send("Oh wait! I'm meant to ask you what you thought of our service!");
-            setTimeout(next, 5000);
+            global.Wait(session, next, 7000);
         },
         function (session, args, next) {
             prompts.beginConfirmDialog(session, {questionText: "Would you like to leave some feedback?"});
@@ -41,6 +41,7 @@ module.exports.init = function () {
             prompts.beginTextDialog(session);
         },
         function (session, args, next) {
+            session.userData.completed = true;
             session.send("Thank you and goodbye!");
             session.endDialog();
         }
@@ -51,6 +52,7 @@ module.exports.init = function () {
             setTimeout(next, 4000);
         },
         function (session, args, next) {
+            session.userData.completed = true;
             session.send("Bye bye!");
             session.endDialog();
         }      
