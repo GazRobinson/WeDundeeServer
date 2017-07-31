@@ -120,7 +120,7 @@ module.exports.init = function () {
                 if (session.userData.finishedQuestions) {
                         session.send("Wow! You got through all the questions I have!");
 	                    session.userData.finishedQuestions = true;
-                        setTimeout(function () { session.beginDialog('/questions/askAQuestion'); }, 4000);
+                        setTimeout(function () { session.beginDialog('/questions/askASecret'); }, 4000);
                         return;
                 }
                 if (session.userData.questionCount < 3) {
@@ -132,7 +132,7 @@ module.exports.init = function () {
                         session.send("Wow! You got through all the questions I have!");
 	                    session.userData.finishedQuestions = true;
                         session.userData.questionCount = 5;
-                        setTimeout(function () { session.beginDialog('/questions/askAQuestion'); }, 4000);
+                        setTimeout(function () { session.beginDialog('/questions/askASecret'); }, 4000);
                     }    
                 }    
             }, function (session, args, next) {
@@ -166,8 +166,66 @@ module.exports.init = function () {
                 } else {
                     session.send("Wait! Sorry! I'm all out of questions apparently :(");
 	                session.userData.finishedQuestions = true;
-                    setTimeout(function () { session.beginDialog('/questions/askAQuestion'); }, 4000);
+                    setTimeout(function () { session.beginDialog('/questions/askASecret'); }, 4000);
                 }    
+            }
+        ]
+    );
+
+    bot.dialog('/questions/askASecret',
+        [
+            function (session, args, next) {
+                session.beginDialog("/secret/root");
+            },
+            function (session, args, next) {
+                if (session.conversationData.heardSecret && session.conversationData.heardSecret == true) {
+                    next();
+                } else {
+                    session.beginDialog('/questions/hearSecret');
+                }    
+            },
+            function (session, args, next) {
+                session.beginDialog('/questions/askAQuestion');
+            },
+            function (session, args, next) {
+                session.endDialog();
+            }
+        ]
+    ).triggerAction({ matches: /^ASKSECRET/ });  
+
+
+    bot.dialog('/questions/hearSecret',
+        [
+            function (session, args, next) {
+                prompts.beginConfirmDialog(session, {questionText:"Would you like to hear a secret someone else has told me?"})
+            },
+            function (session, args, next) {
+                if (args.response == 1) {
+                    session.send("Let me find a good one!");
+                    global.Wait(session, function () { 
+                        next();
+                    });
+                } else {
+                    session.send("Oh well!");
+                    global.Wait(session, function () { 
+                        session.endDialog();
+                    });
+                }   
+            },
+            function (session, args, next) {
+                session.beginDialog('/loadSecret');
+            },
+            function (session, args, next) {
+                session.endDialog();
+            }
+        ]
+    );
+
+    bot.dialog('/negativeRoot2',
+        [
+            function (session, args, next) {
+                session.conversationData.heardSecret = true;
+                session.replaceDialog("/secret/negativeRoot")
             }
         ]
     );
@@ -213,7 +271,7 @@ module.exports.init = function () {
                 if (args.response == 1) {
                     session.beginDialog("/questions/intro");
                 } else {
-                    session.beginDialog('/questions/askAQuestion');
+                    session.beginDialog('/questions/askASecret');
                 }
             }
 
@@ -244,7 +302,9 @@ function LoadAllQs() {
                 CreateDialog(ran_key, qKeys[i], selectedquestion[qKeys[i]]);
             }
             var ret = "/" + ran_key + "/root";
-            qArray.push(ret);
+            if (ret != "/secret/root") {
+                qArray.push(ret);
+            }    
         }
     }, function (errorObject) {
       console.log("The read failed: " + errorObject.code);
@@ -262,7 +322,7 @@ function CreateDialog(rootKeyName, thisKeyName, qData) {
                     } else {
                         session.send(qData.text);
                     }    
-                    prompts.beginMultiDialog(session);
+                    prompts.beginMultiDialog(session, {questionText:qData.text});
                 }, 
                 function (session, args) {
                     if (args.type && args.type == "confirm") {
@@ -288,8 +348,10 @@ function CreateDialog(rootKeyName, thisKeyName, qData) {
                             session.dialogData.solved = false;
                             for (i = 0; i < expected.length; i++) {
                                 for (j = 0; j < expected[i].answer.length; j++) {
+
+                                    console.log("BACON");
+                                    console.log(args);
                                     var reg = args.text.match(expected[i].answer[j]);
-                                    console.log(reg);
                                     if (reg && reg.length > 0) {
                                         if (!expected[i].responseDialog) {
 
@@ -298,6 +360,7 @@ function CreateDialog(rootKeyName, thisKeyName, qData) {
                                             setTimeout(function () { session.endDialog(); }, 6000);
                                             return;
                                         } else {
+                                            global.WaitStop(session);
                                             session.beginDialog("/" + rootKeyName + "/" + expected[i].responseDialog);
                                             return;
                                         }    
@@ -351,7 +414,7 @@ function CreateDialog(rootKeyName, thisKeyName, qData) {
         bot.dialog("/" + rootKeyName + "/" + thisKeyName,
             [
                 function (session, args) {
-                    setTimeout(function () { session.beginDialog(qData.dialog, qData.args);  });                      
+                    global.Wait(session, function () { session.beginDialog(qData.dialog, qData.args); }, 5000);                      
                 }
             ]                    
         ) 

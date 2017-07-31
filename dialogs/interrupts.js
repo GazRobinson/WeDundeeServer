@@ -22,7 +22,7 @@ module.exports = function () {
 
     bot.dialog('/website', function (session, args) {
         session.send("WEBSITE: " + args.url);
-        session.endDialog();
+        global.Wait(session, function () { session.endDialog(); });        
     });
 
     // ROOT

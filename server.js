@@ -290,7 +290,7 @@ global.WaitForInput = function(session, time, func) {
 }
 
 bot.dialog('/confirmIdentity', [
-	function (session, args) {
+	function (session, args, next) {
 		ResetForSession(session);
 		console.log("Confirm");
 		console.log(session.message.address);
@@ -309,11 +309,17 @@ bot.dialog('/confirmIdentity', [
 				unsureResponse: "You don't know if you're you?",
 				prompt: "Are you " + session.userData.name + "?"
 			});
+			global.Wait(session, function () { session.endDialogWithResult({ type: "confirm", response: 1, skipped: true });}, 7000)
 		}	
 	},
 	function (session, args, next) {
+		global.WaitStop(session);
 		if (!args.type || (args.type == "confirm" && args.response == 1)) {
-			session.send("Lovely. It's good to have you back!");
+			if (args.skipped) {
+				session.send("Certainly looks like you anyway!");
+			} else {
+				session.send("Lovely. It's good to have you back!");				
+			}	
 			session.conversationData.hello = true;
 			//global.startTimer();
 			console.log(session.dialogStack());
@@ -492,6 +498,9 @@ bot.dialog('/profile', [
 				break;
 			case "bad":
 				msg = "Ok. That’s doesn't sound great, hope you have a coat.";	
+				break;
+			case "night":
+				msg = "Isn't this past your bed time?";	
 				break;
 		}
 		session.send(msg);
@@ -731,6 +740,7 @@ const secretss = [
 ]
 bot.dialog('/loadSecret', [
 	function (session, args) {
+		session.conversationData.heardSecret = true;
 		session.send(secretss[Math.floor(Math.random()*secretss.length)]);
 		setTimeout(function () {
 			session.endDialog();
@@ -814,6 +824,10 @@ function Init(session) {
 
 global.Wait = function (session, func, time) {
 	timeDict[session.message.address.conversation.id] = setTimeout(func, time|| global.defaultTime);
+}
+global.WaitStop = function (session) {
+		clearTimeout(
+			global.timeDict[session.message.address.conversation.id]);
 }
 global.IdleWait = function (session, func, time) {
 	global.globalTimeDict[session.message.address.conversation.id] = setTimeout(func, time|| global.idleTime);

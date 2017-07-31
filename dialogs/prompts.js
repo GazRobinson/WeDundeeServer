@@ -91,19 +91,24 @@ exports.beginMultiDialog = function (session, options) {
     session.beginDialog('/prompts/multi', options || {});
 }
 
+const scoreThreshold = 0.6;
 exports.createMultiDialog = function (bot, recog) {
     var unsureResponse;
     var prompt = new builder.IntentDialog({ recognizers: [recog] })
         .onBegin(function (session, args) {
+            console.log("HERERERERE: " + args.repeat);
             session.dialogData.scoreThreshold = args.threshold || scoreThreshold;
             if (args.text) {
+            console.log("pie ");
                 args.questionText = args.text;
                 args.repeat = true;
             }
             if (args.questionText) {
+            console.log("fudge ");
                 session.dialogData.qText = args.questionText;
             }
             if (args.repeat) {
+            console.log("oljdhbsgd ");
                 session.send(session.dialogData.qText);
             }
             unsureResponse = args.unsureResponse || getNonUnderstand();
@@ -117,31 +122,40 @@ exports.createMultiDialog = function (bot, recog) {
         .matches('positiveResponse', function (session, args) {
             console.log(args);
             if (args.score > session.dialogData.scoreThreshold){
-                session.endDialogWithResult({ response: 1, type: "confirm" });
+                session.endDialogWithResult({ response: 1, type: "confirm", text: session.message.text });
             } else{
                 session.endDialogWithResult({ response: -1, text: session.message.text });
             }
         })
         .matches('negativeResponse', function (session, args) {
             if (args.score > session.dialogData.scoreThreshold) {
-                session.endDialogWithResult({ response: 0, type: "confirm" });
+                session.endDialogWithResult({ response: 0, type: "confirm", text: session.message.text });
             } else{
                 session.endDialogWithResult({ response: -1, text: session.message.text });
             }
         })
         .matches('intent.dontKnow', function (session, args) {
             if (args.score > session.dialogData.scoreThreshold) {
-                session.endDialogWithResult({ response: 2, type: "confirm" });
+                session.endDialogWithResult({ response: 2, type: "confirm", text: session.message.text });
             } else{
                 session.endDialogWithResult({ response: -1, text: session.message.text });
             }    
         })
         .onDefault(function (session, args) {
-            session.endDialogWithResult({ response: -1, text: session.message.text });
+            //I've got a response that I need.
+            if (/\S/.test(session.message.text)){
+                session.endDialogWithResult({ response: -1, text: session.message.text });
+            } else {
+                //Whitespace only
+                session.send("Lost for words? Don't be shy!");
+                timeDict[session.message.address.conversation.id] = setTimeout(function () { 
+                    console.log("coo");
+                session.replaceDialog('/prompts/multi', {questionText:session.dialogData.qText, prompt:session.dialogData.prompt, repeat: true})
+            }, 5000);
+            }
         });
     bot.dialog('/prompts/multi', prompt);
 }
-const scoreThreshold = 0.5;
 //CUSTOM TEXT
 exports.beginTextDialog = function (session, options) {
     console.log('Do Text');
