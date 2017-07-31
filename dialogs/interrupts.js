@@ -65,7 +65,7 @@ module.exports = function () {
             if (session.dialogStack().length == 0) {
                 setTimeout(function() {
                     session.beginDialog("/");
-                }, 3000);
+                }, 5000);
             }
         }
     }

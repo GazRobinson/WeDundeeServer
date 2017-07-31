@@ -68,7 +68,7 @@ module.exports.init = function () {
                     session.beginDialog("/displayPicture");
                 }, 0, 1
                 );
-        }, 3000, session);	                  
+        }, 5000, session);	                  
         },
         function (session, args) {
             setTimeout(function () {

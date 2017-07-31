@@ -360,7 +360,6 @@ bot.dialog('/confirmIdentity', [
 				
 			session.conversationData.hello = true;
                 session.send('Great! Nice to meet you %s!', session.userData.name);
-                //setTimeout(function () { session.beginDialog('/location'); }, 3000);
                 setTimeout(function () { session.beginDialog('/beginning/intro'); }, 5000);
             }, function (session, args) {
                 console.log("end intro");
@@ -586,7 +585,7 @@ bot.dialog('/displayThought',
 						setTimeout(function () { session.send('"' + posts[0].content + '"') }, 9000);
 						
 					} else {
-						setTimeout(function () { session.send('"' + posts[0].content + '"') }, 3000);
+						setTimeout(function () { session.send('"' + posts[0].content + '"') }, 5000);
 					}	
 				}
 				global.Wait(session, function () { session.endDialog();}, 10000);
@@ -741,10 +740,10 @@ const secretss = [
 bot.dialog('/loadSecret', [
 	function (session, args) {
 		session.conversationData.heardSecret = true;
-		session.send(secretss[Math.floor(Math.random()*secretss.length)]);
-		setTimeout(function () {
+		session.send(secretss[Math.floor(Math.random() * secretss.length)]);
+		global.Wait(session, function () {
 			session.endDialog();
-		}, 3000);
+		});
 	}
 ]);
 

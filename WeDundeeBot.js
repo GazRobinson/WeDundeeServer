@@ -75,7 +75,7 @@ bot.dialog('/greeting', function (session, args, next) {
         } else {
 			
 			session.sendTyping();
-			setTimeout(function () { session.beginDialog('/smallTalk', ("Hi again " + session.userData.name)); }, 3000);
+			setTimeout(function () { session.beginDialog('/smallTalk', ("Hi again " + session.userData.name)); }, 5000);
         }
     }
 ).triggerAction({ matches: 'greeting' });
