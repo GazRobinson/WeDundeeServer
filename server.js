@@ -202,9 +202,22 @@ bot.dialog('/inactive', [
 	}
 ]);
 var timeout;
+bot.dialog('/toastA',
+	[function (session, args, next) { 
+
+			console.log("TOAST A!!");
+		session.send("Finally got here!");
+
+	}
+	]);
 //ROOT
 bot.dialog('/', 	
-	[function (session, args, next) {			
+	[function (session, args, next) {
+		console.log("First here");
+		session.send("Begin");
+		HoldDialog(session, "/toastA", {}, 5000);
+	},
+	function (session, args, next) {			
 		global.IdleStop(session);
 		if (!session.userData.name) {
 			if (!args || !args.greeting) {
@@ -581,9 +594,8 @@ bot.dialog('/displayThought',
 				if (posts.length > 0) {
 					console.log(posts[0]);
 					if (posts[0].content.length > 200) {
-						setTimeout(function () { session.send("Wow... It's a long one!") }, 4000);
-						setTimeout(function () { session.send('"' + posts[0].content + '"') }, 9000);
-						
+						Wait(session, function () { session.send("Wow... It's a long one!"); }, 4000);
+						Wait(session, function () { session.send('"' + posts[0].content + '"'); }, 10000);						
 					} else {
 						setTimeout(function () { session.send('"' + posts[0].content + '"') }, 5000);
 					}	
@@ -822,6 +834,7 @@ function Init(session) {
 }
 
 global.Wait = function (session, func, time) {
+	WaitStop(session);
 	timeDict[session.message.address.conversation.id] = setTimeout(func, time|| global.defaultTime);
 }
 global.WaitStop = function (session) {
@@ -836,4 +849,57 @@ global.IdleStop = function (session) {
 		clearTimeout(
 			global.globalTimeDict[session.message.address.conversation.id]);
 	}	
+}
+
+bot.dialog('/wait/dialog',[
+	function (session, args, next) {
+		if (!session.dialogData.begun) {
+			console.log("Begin wait");
+			session.dialogData.waitArgs = args;
+			session.dialogData.begun = true;
+			global.Wait(session, function () { 
+			console.log("Now do next");next(args); }, session.dialogData.waitArgs.time);
+		} else {
+
+			console.log("WAIT!!");
+			session.send("WAIT");
+		}	
+	},
+	function (session, args, next) {
+			console.log("Now here for: ");
+			console.log( session.dialogData.waitArgs);
+		if (session.dialogData.waitArgs.passthrough) {
+			session.replaceDialog(session.dialogData.waitArgs.nextDialog, session.dialogData.waitArgs.passthrough);
+		} else {
+			session.replaceDialog(session.dialogData.waitArgs.nextDialog);
+		}	
+	}	]
+);
+
+bot.dialog('/wait/function',[
+	function (session, args, next) {
+		if (!session.dialogData.begun) {
+			session.dialogData.waitArgs = args;
+			session.dialogData.begun = true;
+			global.Wait(session, function () { next(); }, session.dialogData.waitArgs.time);
+		} else {
+			sesison.send("WAIT");
+		}	
+	},
+	function (session, args, next) {
+		if (session.dialogData.waitArgs.passthrough) {
+			session.replaceDialog(session.dialogData.waitArgs.dialogName, session.dialogData.waitArgs.passthrough);
+		} else {
+			session.replaceDialog(session.dialogData.waitArgs.dialogName);
+		}	
+	}
+]
+);
+
+global.HoldDialog = function (session, dialogName, args, time) {
+	console.log("holding: " + dialogName);
+	session.beginDialog('/wait/dialog', { nextDialog: dialogName, time: time ? time : 7000, passthrough: {}||args });
+}
+global.holdFunction = function (session, func, args, time) {
+	
 }
