@@ -12,7 +12,7 @@ module.exports.init = function () {
         [
             function (session, args) {
                 if (!session.userData.knowsWhatsUp) {
-                    prompts.beginConfirmDialog(session, {questionText: "So " + session.userData.name + ", would you like to know what I'm up to?"});
+                    prompts.beginSoftConfirmDialog(session, {questionText: "So " + session.userData.name + ", would you like to know what I'm up to?"});
                 } else {
                     session.replaceDialog('/beginning/answerQuestionsAlt');
                 }    
@@ -35,14 +35,14 @@ module.exports.init = function () {
         [
             function (session, args, next) {
                 if (!session.userData.knowsAboutQuestions) {
-                    prompts.beginConfirmDialog(session, { questionText: "This site looks a little bare don’t you think?" });
+                    prompts.beginSoftConfirmDialog(session, { questionText: "This site looks a little bare don’t you think?" });
                 } else {
                     next({ response: 1 });
                 }
             },
             function (session, args, next) {
                 if (args.response == 1) {
-                    prompts.beginConfirmDialog(session, { questionText: "Would you like a nice picture of Dundee in the background?" });
+                    prompts.beginSoftConfirmDialog(session, { questionText: "Would you like a nice picture of Dundee in the background?" });
                 } else {
                     session.send("Ok, I guess I just don’t like minimal design.")
                     HoldNext(session, { response: 0 });
@@ -68,7 +68,7 @@ module.exports.init = function () {
                 HoldDialog(session, '/beginning/siteDesign');
             }, 
             function (session, args) {
-                prompts.beginConfirmDialog(session, {questionText: "So do you want to answer some questions?"});
+                prompts.beginSoftConfirmDialog(session, {questionText: "So do you want to answer some questions?"});
             }, 
             function (session, args, next) {
                 if (args.response == 1) {
@@ -86,7 +86,7 @@ module.exports.init = function () {
     bot.dialog('/beginning/answerQuestions',
         [
             function (session, args) {
-                prompts.beginConfirmDialog(session, {questionText: "So do you want to answer some questions now?"});
+                prompts.beginSoftConfirmDialog(session, {questionText: "So do you want to answer some questions now?"});
             }, 
             function (session, args, next) {
                 if (args.response == 1) {
@@ -107,7 +107,7 @@ module.exports.init = function () {
     bot.dialog('/beginning/answerQuestionsAlt',
         [
             function (session, args) {
-                prompts.beginConfirmDialog(session, {questionText:"Do you want to answer some questions?"});
+                prompts.beginSoftConfirmDialog(session, {questionText:"Do you want to answer some questions?"});
             }, 
             function (session, args, next) {
                 if (args.response == 1) {
@@ -143,7 +143,7 @@ module.exports.init = function () {
     bot.dialog('/beginning/firstRefusal',
         [
             function (session, args) {
-                prompts.beginConfirmDialog(session, {questionText:"Okay... Shall I just get to the bit where I ask you questions?"});
+                prompts.beginSoftConfirmDialog(session, {questionText:"Okay... Shall I just get to the bit where I ask you questions?"});
             },
             function (session, args, next) {
                 if (args.response == 1) {
@@ -160,7 +160,7 @@ module.exports.init = function () {
     bot.dialog('/beginning/secondRefusal',
         [
             function (session, args) {
-                prompts.beginConfirmDialog(session, {questionText:"Okay... Well would you like to know something that someone said once about the city?"});
+                prompts.beginSoftConfirmDialog(session, {questionText:"Okay... Well would you like to know something that someone said once about the city?"});
             },
             function (session, args, next) {
                 if (args.response == 1) {
@@ -179,7 +179,7 @@ module.exports.init = function () {
         [
             function (session, args) {
                 console.log(session.dialogStack());
-                prompts.beginConfirmDialog(session, {questionText: "Ok. I feel like we got off on the wrong footing, shall we start over?"});
+                prompts.beginSoftConfirmDialog(session, {questionText: "Ok. I feel like we got off on the wrong footing, shall we start over?"});
             },
             function (session, args, next) {
                 console.log("thied 2");

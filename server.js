@@ -215,20 +215,6 @@ var timeout;
 //ROOT
 bot.dialog('/', 	
 	[
-		function (session, args) {
-			prompts.beginSoftConfirmDialog(session, {questionText:"Will this work?"});
-		},
-			function (session, args) {
-			if (args.type && args.type == "confirm") {
-                    if (args.response == 1) {
-                        session.send("This worked positive");
-                    } else {
-                        session.send("This worked negative");
-                    }
-			} else {
-					session.send("not what i expected");
-			}
-	},	
 		function (session, args, next) {	
 			global.SaveResponse(session, "pie/fun", "butts");
 			global.IdleStop(session);
@@ -274,8 +260,8 @@ bot.dialog('/',
 
 
 bot.dialog('/root/stillHere', [
-	function (session, args, next) {	
-		prompts.beginConfirmDialog(session, {questionText: "Still here, huh?"});		
+	function (session, args, next) {		
+		prompts.beginSoftConfirmDialog(session, {questionText: "Still here, huh?"});		
 	},
 	function (session, args, next) {
 		console.log(args);
