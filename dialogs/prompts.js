@@ -101,9 +101,20 @@ exports.beginSoftConfirmDialog = function (session, args) {
             function (session, args, next) {
                 //Wait here
                 session.dialogData.initialArgs = args || session.dialogData.initialArgs;
-                session.send(session.dialogData.initialArgs.questionText);
+                global.WaitStop(session);
+                if (session.dialogData.initialArgs.resumed) {
+                    session.send("Now then... where was I?");
+                    global.Wait(session, function () { session.send(session.dialogData.initialArgs.questionText); }, 4000);
+                } else if(session.dialogData.initialArgs.repeating){
+                    session.send(unsureArray);
+                    global.Wait(session, function () { session.send(session.dialogData.initialArgs.questionText); }, 4000);
+                } else{
+                    session.dialogData.initialArgs.repeating = true; //Repeat by default
+                    session.send(session.dialogData.initialArgs.questionText);
+                }
             },
             function (session, args, next) {
+                global.WaitStop(session);
                 if (args.type && args.type == "confirm") {
                     if (args.response == 1) {
                         session.endDialogWithResult({ response: 1 , type: "confirm"});
@@ -111,7 +122,14 @@ exports.beginSoftConfirmDialog = function (session, args) {
                         session.endDialogWithResult({ response: 0 , type: "confirm"});
                     }
                 } else {
-                    session.endDialog();
+                    if (args && args.confused) {
+                        session.dialogData.initialArgs.resumed = false;
+                        session.dialogData.initialArgs.repeating = true;
+                    } else {
+                        session.dialogData.initialArgs.repeating = false;
+                        session.dialogData.initialArgs.resumed = true;
+                    }    
+                    session.replaceDialog('/prompts/softConfirm', session.dialogData.initialArgs);
                 }    
             },
             function (session, args, next) {

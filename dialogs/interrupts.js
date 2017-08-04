@@ -131,7 +131,7 @@ module.exports = function () {
                 type: 'gaz',
                 text: "unlock"
             });
-            session.endDialog();
+            session.endDialogWithResult({confused:true});
         }
     );
     
