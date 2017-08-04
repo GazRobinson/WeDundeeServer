@@ -59,7 +59,7 @@ module.exports.init = function () {
             function (session, args) {
 
 			console.log(session.dialogStack());
-                prompts.beginConfirmDialog(session, {questionText: "Are you here to upload a picture?"});                
+                prompts.beginSoftConfirmDialog(session, {questionText: "Are you here to upload a picture?"});                
             },
             function (session, args, next) {
                 console.log(session.dialogStack());

@@ -233,7 +233,7 @@ module.exports = function () {
                 setTimeout(next, 10000);
             }, 
             function (session, args, next) {            
-                prompts.beginConfirmDialog(session, {questionText: 'Would you like to know the population density?', skip:true});
+                prompts.beginSoftConfirmDialog(session, {questionText: 'Would you like to know the population density?', skip:true});
             },
             function (session, args, next) {
                 if (args.response == 1) {

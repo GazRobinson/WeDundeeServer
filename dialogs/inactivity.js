@@ -16,7 +16,7 @@ module.exports.init = function () {
 
     bot.dialog('/inactive/picture', [
         function (session, args) {
-			prompts.beginConfirmDialog(session, {questionText: 'Would you like to see a picture of Dundee?',skip:false});
+			prompts.beginSoftConfirmDialog(session, {questionText: 'Would you like to see a picture of Dundee?',skip:false});
         },
         function (session, args) {
             console.log("We got here at least");
@@ -35,7 +35,7 @@ module.exports.init = function () {
 
     bot.dialog('/inactive/thought', [
         function (session, args) {
-			prompts.beginConfirmDialog(session, {questionText: 'Would you like to hear a thought from the city?',skip:false});
+			prompts.beginSoftConfirmDialog(session, {questionText: 'Would you like to hear a thought from the city?',skip:false});
         },
         function (session, args) {
             if (args.response == 1) {
@@ -49,7 +49,7 @@ module.exports.init = function () {
 
     bot.dialog('/inactive/music', [
         function (session, args) {
-			prompts.beginConfirmDialog(session, {questionText:'Would you like to hear some music?' ,skip:false});
+			prompts.beginSoftConfirmDialog(session, {questionText:'Would you like to hear some music?' ,skip:false});
         },
         function (session, args) {
             if (args.response == 1) {
@@ -63,7 +63,7 @@ module.exports.init = function () {
 
     bot.dialog('/inactive/answer', [
         function (session, args) {
-			prompts.beginConfirmDialog(session, {questionText: 'Can you answer a question about the city?',skip:false});
+			prompts.beginSoftConfirmDialog(session, {questionText: 'Can you answer a question about the city?',skip:false});
         },
         function (session, args) {
             if (args.response == 1) {
@@ -77,7 +77,7 @@ module.exports.init = function () {
 
     bot.dialog('/inactive/question', [
         function (session, args) {
-			prompts.beginConfirmDialog(session, {questionText: "Do you have an obscure question about Dundee you'd like someone to answer?",skip:false});
+			prompts.beginSoftConfirmDialog(session, {questionText: "Do you have an obscure question about Dundee you'd like someone to answer?",skip:false});
         },
         function (session, args) {
             if (args.response == 1) {

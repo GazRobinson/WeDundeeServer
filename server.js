@@ -321,7 +321,7 @@ bot.dialog('/confirmIdentity', [
 				unsureResponse: "You don't know if you're you?",
 				prompt: "Are you " + session.userData.name + "?"
 			});
-			global.Wait(session, function () { session.endDialogWithResult({ type: "confirm", response: 1, skipped: true });}, 7000)
+			global.Wait(session, function () { session.endDialogWithResult({ type: "confirm", response: 1, skipped: true });}, 14000)
 		}	
 	},
 	function (session, args, next) {
@@ -430,7 +430,7 @@ bot.dialog('/intro/confirmName',
 			
 			if (args.type && args.type == "confirm") {
 				if (args.response == 1) {
-					session.send("Ok. I will call you 'Bot'... Your secret's safe with me ;)");
+					session.send("Ok. I will call you 'Bot'... Your secret's safe with me " + global.emoji.wink);
 					session.userData.name = 'Bot';
 					
 				} else {
@@ -450,7 +450,7 @@ function getWeatherIcon(icon) {
 		case "clear-night":
 			return "dark skies"
 		case "rain":
-			return "raining :("
+			return "raining " + global.emoji.frown;
 		case "snow":
 			return "snowing! How exciting!"
 		case "sleet":
@@ -501,7 +501,7 @@ bot.dialog('/profile', [
 		console.log("Mood: " + args.mood);
 		switch (args.mood) {
 			case "good":
-				msg = "It’s always sunny in Dundee. ;)";	
+				msg = "It’s always sunny in Dundee. " + global.emoji.wink;	
 				break;	
 			case "ok":
 				msg = "Hmmm… a bit more sun would be nice.";		
@@ -729,6 +729,16 @@ bot.dialog('/askQuestion', [
 		});
 	}
 ]);
+
+bot.dialog('/quickAskQuestion', 
+	function (session, args) {
+		SaveQuestion(session.userData.name, args.text);
+		session.send("I'll save that one for later. Once I have more information I'll get back to you!");
+		global.Wait(session, function () {
+			session.endDialog();
+		});
+	}
+);
 
 bot.dialog('/answerQuestion', [
 	function (session, args) {

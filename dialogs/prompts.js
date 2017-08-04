@@ -33,6 +33,15 @@ unsureArray = [
     "Just an 'Aye' or 'naw' please.",
     "Didn't catch that. Try a 'yes' or 'no' or something similar..."
 ]
+resumeArray = [
+    "Now then... Where was I?",
+    "What was I saying?",
+    "Back to my previous question:",
+    "Now as I was saying...",
+    "I've lost my train of thought now! What was I saying?",
+    "Hang on... What were we talking about?",
+    "Now that we're done with that distraction..."
+]
 exports.createConfirmDialog = function (bot, recog) {
     var allowSkip = false;
     var unsureResponse;
@@ -103,7 +112,7 @@ exports.beginSoftConfirmDialog = function (session, args) {
                 session.dialogData.initialArgs = args || session.dialogData.initialArgs;
                 global.WaitStop(session);
                 if (session.dialogData.initialArgs.resumed) {
-                    session.send("Now then... where was I?");
+                    session.send(resumeArray);
                     global.Wait(session, function () { session.send(session.dialogData.initialArgs.questionText); }, 4000);
                 } else if(session.dialogData.initialArgs.repeating){
                     session.send(unsureArray);

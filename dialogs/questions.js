@@ -164,7 +164,7 @@ module.exports.init = function () {
                     session.userData.questionCount++;
                     session.beginDialog(nextQ);
                 } else {
-                    session.send("Wait! Sorry! I'm all out of questions apparently :(");
+                    session.send("Wait! Sorry! I'm all out of questions apparently " + global.emoji.frown);
 	                session.userData.finishedQuestions = true;
                     setTimeout(function () { session.beginDialog('/questions/askASecret'); }, 4000);
                 }    
@@ -197,7 +197,7 @@ module.exports.init = function () {
     bot.dialog('/questions/hearSecret',
         [
             function (session, args, next) {
-                prompts.beginConfirmDialog(session, {questionText:"Would you like to hear a secret someone else has told me?"})
+                prompts.beginSoftConfirmDialog(session, {questionText:"Would you like to hear a secret someone else has told me?"})
             },
             function (session, args, next) {
                 if (args.response == 1) {
@@ -234,18 +234,22 @@ module.exports.init = function () {
         [
             function (session, args, next) {
                 if (!session.userData.askedAQuestion) {
-                    prompts.beginConfirmDialog(session, {questionText: "Ok before we go, do you have a question you would like to ask the people of Dundee?"});
+                    prompts.beginMultiDialog(session, {questionText: "Ok before we go, do you have a question you would like to ask the people of Dundee?"});
                 } else {
                     session.endDialog();
                 }
             },
             function (session, args, next) {
-                if (args.response == 1) {
-                    session.beginDialog('/askQuestion');
+                if (args.type && args.type == "confirm") {
+                    if (args.response == 1) {
+                        session.beginDialog('/askQuestion');
+                    } else {
+                        session.send("I guess you must already know everything!");
+                        global.Wait(session, function () { next({ bad: true }); });
+                    }
                 } else {
-                    session.send("I guess you must already know everything!");
-                    global.Wait(session, function () { next({ bad: true}); });
-                }
+                    session.beginDialog('/quickAskQuestion', {text: args.text})
+                }    
             },
             function (session, args, next) {
                 session.beginDialog('/picture/intro', args);
@@ -265,7 +269,7 @@ module.exports.init = function () {
                 } else {
                     msg = "How about another one?";
                 }
-                prompts.beginConfirmDialog(session, {questionText: msg});
+                prompts.beginSoftConfirmDialog(session, {questionText: msg});
             },
             function (session, args, next) {
                 if (args.response == 1) {
@@ -394,7 +398,7 @@ function CreateDialog(rootKeyName, thisKeyName, qData) {
         bot.dialog("/" + rootKeyName + "/" + thisKeyName,
             [
                 function (session, args) {
-                    prompts.beginConfirmDialog(session, {questionText: qData.text});
+                    prompts.beginSoftConfirmDialog(session, {questionText: qData.text});
                 },
                 function (session, args, next) {
                     if (args.response == 1) {
