@@ -6,6 +6,7 @@ global.prompts = require('./dialogs/prompts.js');
 const defaultDialog = require('./dialogs/default.js')
 var dialogs = {};
 var greets = require('./intents/greetings.js');
+global.emoji = require('./dialogs/emoji.js');
 dialogs.inactivity = require('./dialogs/inactivity.js');
 dialogs.inactivity.init();
 dialogs.fallback = require('./dialogs/fallback.js');
@@ -51,6 +52,9 @@ global.SendMessage = function (session, message) {
 
 module.exports.db = db = admin.database();
 var ref = db.ref("server/saving-data/questions");
+var secretsRef = db.ref("server/saving-data/responses/secret/answers");
+global.responseRef = db.ref("server/saving-data/responses");
+LoadSecrets();
 
 dialogs.questions = require('./dialogs/questions.js');
 dialogs.questions.init();
@@ -78,7 +82,6 @@ function GetBackendQuestion(callback) {
 		currentQuestion = selectedquestion;
 		console.log(selectedquestion);
 		callback(currentQuestion);
-		//AnswerQuestion(ran_key, selectedquestion.answers, ["New Answer A", "New Answer B"]);
 	}, function (errorObject) {
 		console.log("The read failed: " + errorObject.code);
 		ref.off("value");
@@ -98,6 +101,12 @@ function AnswerQuestion(id, currentAnswers, newAnswers) {
 	);
 }
 
+global.SaveResponse = function(session, questionID, response ) {
+	var postsRef = responseRef.child(questionID + "/answers");
+
+	var newPostRef = postsRef.push();
+	newPostRef.set({username:session.userData.name||"Anonymous", answer:response});
+}
 
 
 //WORDPRESS
@@ -126,7 +135,25 @@ prompts.createMultiDialog(bot, recognizer);
 var updateCount = 0;
 /////////DIALOGS/////////
 /////
+
+bot.on('incoming', function (message) {
+	bot.loadSession(message.address, function (err, session) {
+			if (err)
+				console.log("ERR: " + err);
+		
+		});
+}
+);	
+bot.on('routing', function (session) {
+	/*session.send({
+     type: 'gaz',
+     text: "unlock"
+	});*/
+
+}
+);
 bot.on('conversationUpdate', function (message) {
+	
 	if (message.membersAdded[0].name == "WeDundee") {
 		console.log("Set address");
 	//
@@ -169,30 +196,12 @@ bot.on('conversationUpdate', function (message) {
 				if (err)
 					console.log("ERR: " + err);
 				session.conversationData.address = add;
-				/*setTimeout(function () {
-					userTick(session);
-				}, 5000);*/
 			}
 				console.log("msg sent");
 				session.conversationData.lastMessageTime = Date.now();
 		});
 	}
 });
-
-function userTick(session) {
-	if (Date.now() - session.conversationData.lastMessageTime > idleTime) {
-		//IDLETRIGGER
-	}
-	setTimeout(function () {
-		userTick(session);
-	}, 5000)
-}
-
-reactToIdle = function () {
-	var randum = dialogs.inactivity.getRandom();
-	console.log("IDLE: " + randum);
-	bot.beginDialog(global.address, '/inactive', randum);
-}
 
 bot.dialog('/inactive', [
 	function (session, args) {
@@ -202,50 +211,54 @@ bot.dialog('/inactive', [
 	}
 ]);
 var timeout;
-bot.dialog('/toastA',
-	[function (session, args, next) { 
 
-			console.log("TOAST A!!");
-		session.send("Finally got here!");
-
-	}
-	]);
 //ROOT
 bot.dialog('/', 	
-	[function (session, args, next) {
-		console.log("First here");
-		session.send("Begin");
-		HoldDialog(session, "/toastA", {}, 5000);
-	},
-	function (session, args, next) {			
-		global.IdleStop(session);
-		if (!session.userData.name) {
-			if (!args || !args.greeting) {
-				session.beginDialog("/root/introductions")
+	[
+		function (session, args) {
+			prompts.beginSoftConfirmDialog(session, {questionText:"Will this work?"});
+		},
+			function (session, args) {
+			if (args.type && args.type == "confirm") {
+                    if (args.response == 1) {
+                        session.send("This worked positive");
+                    } else {
+                        session.send("This worked negative");
+                    }
 			} else {
-				session.beginDialog('/intro');				
-			}		
-			return;
-		} else {
-			if (!session.conversationData.hello) {
-				session.beginDialog('/confirmIdentity');
-			} else {
-				if ((!session.userData.knowsAboutQuestions && !session.userData.knowsWhatsUp )|| session.userData.questionCount < 1) {
-					session.beginDialog('/beginning/intro');
+                        session.send("not what i expected");
+				}
+	},	
+		function (session, args, next) {	
+			global.SaveResponse(session, "pie/fun", "butts");
+			global.IdleStop(session);
+			if (!session.userData.name) {
+				if (!args || !args.greeting) {
+					session.beginDialog("/root/introductions")
 				} else {
-					if (session.dialogStack().length < 2) {
-						console.log("Small talk time!");
-						var randum = dialogs.fallback.getRandom();
-						session.beginDialog(randum);
+					session.beginDialog('/intro');				
+				}		
+				return;
+			} else {
+				if (!session.conversationData.hello) {
+					session.beginDialog('/confirmIdentity');
+				} else {
+					if ((!session.userData.knowsAboutQuestions && !session.userData.knowsWhatsUp )|| session.userData.questionCount < 1) {
+						session.beginDialog('/beginning/intro');
 					} else {
-						console.log("Trying to idle with a stack");
-						console.log(session.dialogStack());
+						if (session.dialogStack().length < 2) {
+							console.log("Small talk time!");
+							var randum = dialogs.fallback.getRandom();
+							session.beginDialog(randum);
+						} else {
+							console.log("Trying to idle with a stack");
+							console.log(session.dialogStack());
+						}	
 					}	
 				}	
-			}	
-			return;
-		}
-	},
+				return;
+			}
+		},
 		function (session, args, next) {	
 			if (!session.userData.completed) {
 				console.log("We have fallen back to the root");
@@ -339,15 +352,15 @@ bot.dialog('/confirmIdentity', [
 			//session.endDialog();
 			if (session.userData.usedQuestions.length > 2) {
 				console.log(session.dialogStack());
-				setTimeout(function () { session.beginDialog('/picture/picture'); }, 5000);
+				HoldDialog(session, '/picture/picture');
 			} else {
-				setTimeout(function () { session.beginDialog('/beginning/intro'); }, 5000);
+				HoldDialog(session, '/beginning/intro');
 			}
 				
 		} else if (args.type == "confirm" && args.response == 0) {
 			session.send("Oh sorry! I thought you looked like " + session.userData.name + ". How embarrasing for them!");
 			global.ResetData(session);
-			setTimeout(function () { session.beginDialog('/intro'); }, 5000);
+			HoldDialog(session, '/intro');
 		} else if (args.type == "confirm" && args.response == 2) {
 			session.replaceDialog('/confirmIdentity', { q: "Well? Are you " + session.userData.name + "?" });
 		} 
@@ -373,7 +386,7 @@ bot.dialog('/confirmIdentity', [
 				
 			session.conversationData.hello = true;
                 session.send('Great! Nice to meet you %s!', session.userData.name);
-                setTimeout(function () { session.beginDialog('/beginning/intro'); }, 5000);
+				HoldDialog(session, '/beginning/intro');
             }, function (session, args) {
                 console.log("end intro");
                 session.endDialog();
@@ -475,11 +488,11 @@ function getWeatherMood(icon) {
 	if (icon == "clear-day") {
 		return "good";
 	} else if (icon == "rain"||icon == "snow"||icon == "sleet"||icon == "wind"||icon == "fog"){
-		return "bad"
+		return "bad";
 	} else if (icon == "clear-night"||icon == "partly-cloudy-night"){
-		return "night"
+		return "night";
 	} else {
-		return "ok"
+		return "ok";
 	}
 }
 
@@ -494,8 +507,7 @@ bot.dialog('/profile', [
 		CW = dialogs.weather.GetCurrentWeather();
 		weatherInfo.icon = CW.icon;
 		session.send('Welcome to We Dundee, where the weather is currently '+ CW.temperature + ' degrees and ' + getWeatherIcon(weatherInfo.icon));
-		
-		timeDict[session.message.address.conversation.id] = setTimeout(function () { next({mood:getWeatherMood(weatherInfo.icon)}); }, 5000);
+		HoldNext(session, { mood: getWeatherMood(weatherInfo.icon) });
 	},
 	function (session, args, next) {
 		summary = CW.summary.toLowerCase();
@@ -516,7 +528,7 @@ bot.dialog('/profile', [
 				break;
 		}
 		session.send(msg);
-		timeDict[session.message.address.conversation.id] = setTimeout(function () { next(); }, global.defaultTime);
+		HoldNext(session);
 	},
 	function (session, args, next) {
 		session.send("Anyway...");
@@ -586,23 +598,26 @@ function callback(results) {
 bot.dialog('/displayThought',
 	[
 		function (session, args) {
-			session.send("Here's something someone wanted to see in the city...");
-			console.log("Getting thought");
-			wpClient.getPosts({ post_type: 'thoughts', number: 1, offset: Math.floor(Math.random() * 1000) }, function (error, posts) {
-				if (error) console.log(error);
-				console.log("Found " + posts.length + " posts!");
-				if (posts.length > 0) {
-					console.log(posts[0]);
-					if (posts[0].content.length > 200) {
-						Wait(session, function () { session.send("Wow... It's a long one!"); }, 4000);
-						Wait(session, function () { session.send('"' + posts[0].content + '"'); }, 10000);						
-					} else {
-						setTimeout(function () { session.send('"' + posts[0].content + '"') }, 5000);
-					}	
-				}
-				global.Wait(session, function () { session.endDialog();}, 10000);
+			if (!session.dialogData.done) {
+				session.dialogData.done = true;
+				session.send("Here's something someone wanted to see in the city...");
+				console.log("Getting thought");
+				wpClient.getPosts({ post_type: 'thoughts', number: 1, offset: Math.floor(Math.random() * 1000) }, function (error, posts) {
+					if (error) console.log(error);
+					console.log("Found " + posts.length + " posts!");
+					if (posts.length > 0) {
+						console.log(posts[0]);
+						if (posts[0].content.length > 200) {
+							Wait(session, function () { session.send("Wow... It's a long one!"); }, 4000);
+							Wait(session, function () { session.send('"' + posts[0].content + '"'); }, 10000);
+						} else {
+							setTimeout(function () { session.send('"' + posts[0].content + '"') }, 5000);
+						}
+					}
+					Wait(session, function () { session.endDialog(); }, 10000);
 				
-			});
+				});
+			}	
 		}
 	]
 );
@@ -619,9 +634,7 @@ bot.dialog('/playMusic',
 				name: "Laeto"
 			});
 			bot.send(msg);
-
-			setTimeout(next, 5000);
-
+			HoldNext(session);
 		}, function (session, args, next) {
 			session.send("Just type 'Stop music' if you've had enough!");
 			session.endDialog();
@@ -642,7 +655,7 @@ bot.dialog('/otherSite',
 			});
 			bot.send(msg);
 
-			setTimeout(next, 5000);
+			HoldNext(session);
 
 		}, function (session, args, next) {
 			session.send("See you soon!");
@@ -749,10 +762,32 @@ const secretss = [
 	"The Law has a disused rail tunnel running through it",
 	"we have more sunshine hours than any other city in Scotland"
 ]
+global.realSecrets = [];
+function LoadSecrets() {
+	secretsRef.on("value", function (snapshot) {
+		console.log("Secrets loaded!");
+		secretsRef.off("value");
+		global.realSecrets = snapshot.val();
+		
+		console.log(snapshot.val());
+	}, function (errorObject) {
+		console.log("The read failed: " + errorObject.code);
+		secretsRef.off("value");
+	});
+}
+function GetSecret(obj) {
+	var obj_key = Object.keys(obj);
+	console.log(obj_key);
+	return obj[obj_key[Math.floor(Math.random() * obj_key.length)]];
+}
 bot.dialog('/loadSecret', [
 	function (session, args) {
 		session.conversationData.heardSecret = true;
-		session.send(secretss[Math.floor(Math.random() * secretss.length)]);
+		if (realSecrets) {
+			session.send(GetSecret(realSecrets).answer);
+		} else {
+			session.send(secretss[Math.floor(Math.random() * secretss.length)]);
+		}	
 		global.Wait(session, function () {
 			session.endDialog();
 		});
@@ -817,7 +852,7 @@ global.ResetData = function (session) {
 }
 function Init(session) {
 	console.log("init");
-		console.log(session.message.address);
+	console.log(session.message.address);
 	session.conversationData.init = true;
 	session.conversationData.hello = false;
 	session.conversationData.messageStack = [];
@@ -875,6 +910,31 @@ bot.dialog('/wait/dialog',[
 		}	
 	}	]
 );
+bot.dialog('/wait/next', [
+	function (session, args, next) {
+		if (!session.dialogData.begun) {
+			console.log("Begin wait");
+			session.dialogData.waitArgs = args;
+			session.dialogData.begun = true;
+			global.Wait(session, function () {
+				next(args);
+			}, session.dialogData.waitArgs.time);
+		} else {
+
+			console.log("WAIT!!");
+			session.send("WAIT");
+		}
+	},
+	function (session, args, next) {
+		if (session.dialogData.waitArgs.passthrough) {
+			console.log("Passthrough");
+			console.log(session.dialogData.waitArgs.passthrough);
+			session.endDialogWithResult(session.dialogData.waitArgs.passthrough);
+		} else {
+			session.endDialog();
+		}	
+	}	]
+);
 
 bot.dialog('/wait/function',[
 	function (session, args, next) {
@@ -883,7 +943,7 @@ bot.dialog('/wait/function',[
 			session.dialogData.begun = true;
 			global.Wait(session, function () { next(); }, session.dialogData.waitArgs.time);
 		} else {
-			sesison.send("WAIT");
+			session.send("WAIT");
 		}	
 	},
 	function (session, args, next) {
@@ -898,8 +958,14 @@ bot.dialog('/wait/function',[
 
 global.HoldDialog = function (session, dialogName, args, time) {
 	console.log("holding: " + dialogName);
-	session.beginDialog('/wait/dialog', { nextDialog: dialogName, time: time ? time : 7000, passthrough: {}||args });
+	session.sendTyping();
+	session.beginDialog('/wait/dialog', { nextDialog: dialogName, time: time ? time : global.defaultTime, passthrough: args || {} });
 }
-global.holdFunction = function (session, func, args, time) {
-	
+global.HoldFunction = function (session, func, args, time) {
+	session.sendTyping();
+	session.beginDialog('/wait/function', { function: func, time: time ? time : global.defaultTime, passthrough: args || {}});
+}
+global.HoldNext = function (session, args, time) {
+	session.sendTyping();
+	session.beginDialog('/wait/next', { time: time ? time : global.defaultTime, passthrough: args || {} });
 }

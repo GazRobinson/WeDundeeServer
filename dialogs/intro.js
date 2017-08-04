@@ -1,6 +1,6 @@
 module.exports.init = function () {
     var helloArray = [
-        { message: "Hello", time: 10000 },
+        { message: "Hello " + global.emoji.smile, time: 10000 },
         { message: "Hi?", time: 10000 },
         { message: "You can talk to me by typing on your keyboard", time: 12000 }/*,
         { message: "Type something to me", time: 14000 },
@@ -22,7 +22,7 @@ module.exports.init = function () {
                 if (count < helloArray.length) {
                     timeDict[session.message.user.id] = setTimeout(function () {
                         session.replaceDialog('/intro/start', { waiting: true, count: count });
-                    }, 6000);
+                    }, 10000);
                 } else {
                     count = 0;
                     timeDict[session.message.user.id] = setTimeout(function () {

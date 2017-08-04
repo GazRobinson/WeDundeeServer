@@ -124,6 +124,64 @@ module.exports = function () {
         session.beginDialog('/stopMusic');
              } });
 
+    bot.dialog('/blankResponse',
+        function (session, args) {
+            console.log("Blank Response");
+            session.send({
+                type: 'gaz',
+                text: "unlock"
+            });
+            session.endDialog();
+        }
+    );
+    
+    bot.dialog('/positiveResponse',	
+        function (session, args) {
+            console.log("EXTERNAL POSITIVE");
+            session.endDialogWithResult({ response: 1 , type: "confirm"});
+		}
+    ).triggerAction({ matches: 'positiveResponse',
+        onSelectAction: (session, args, next) => {  
+            console.log(session.dialogStack());
+
+            console.log(session.dialogStack().length);
+            if (args.intent.score > 0.7) {
+                    if (session.dialogStack().length > 0) {                        
+                        session.beginDialog('/positiveResponse');
+                    } else {                 
+                        session.beginDialog('/');
+                    } 
+                } else {
+                    if (session.dialogStack().length > 0) {                        
+                        session.beginDialog('/blankResponse');
+                    } else {
+                        session.beginDialog('/');
+                    }    
+                }   
+            }
+        });
+    bot.dialog('/negativeResponse',	
+        function (session, args) {
+            console.log("EXTERNAL NEGATIVE");
+            session.endDialogWithResult({ response: 0 , type: "confirm"});
+		}
+    ).triggerAction({ matches: 'negativeResponse',
+        onSelectAction: (session, args, next) => {  
+            if (args.intent.score > 0.7) {
+                    if (session.dialogStack().length > 0) {                        
+                        session.beginDialog('/negativeResponse');
+                    } else {                 
+                        session.beginDialog('/');
+                    } 
+                } else {
+                    if (session.dialogStack().length > 0) {                        
+                        session.beginDialog('/blankResponse');
+                    } else {                 
+                        session.beginDialog('/');
+                    }    
+                } 
+    } });
+    
     bot.dialog('/interrupt',
 	[
         function (session, args) {
@@ -190,7 +248,7 @@ module.exports = function () {
      
     bot.dialog('sec', function (session) {
         
-        session.beginDialog('/secret/root');
+        session.beginDialog('/loadSecret');
     }).triggerAction({ matches: /^FAME/ });  
 
     // RESET

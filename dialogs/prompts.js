@@ -27,7 +27,12 @@ exports.beginConfirmDialog = function (session, options) {
     console.log('Do Confirm');
     session.beginDialog('/prompts/confirm', options || {});
 }
-
+unsureArray = [
+    "Please answer yes or no! I'm still learning!",
+    "Sorry, can you answer that one with some sort of yes or no?",
+    "Just an 'Aye' or 'naw' please.",
+    "Didn't catch that. Try a 'yes' or 'no' or something similar..."
+]
 exports.createConfirmDialog = function (bot, recog) {
     var allowSkip = false;
     var unsureResponse;
@@ -41,7 +46,7 @@ exports.createConfirmDialog = function (bot, recog) {
                 session.send(session.dialogData.qText);
             }    
 
-            unsureResponse = args.unsureResponse || getNonUnderstand();
+            unsureResponse = args.unsureResponse;
             session.dialogData.allowSkip = false;
             if (args) {
                 if (args.skip) {
@@ -59,7 +64,7 @@ exports.createConfirmDialog = function (bot, recog) {
             if (session.dialogData.allowSkip) {
                 session.endDialogWithResult({ response: 2 , type: "confirm"});
             } else {
-                session.send(unsureResponse || "Please answer yes or no! I'm still learning!");
+                session.send(unsureResponse || unsureArray);
                 timeDict[session.message.address.conversation.id] = setTimeout(function () { 
                 session.replaceDialog('/prompts/confirm', {questionText:session.dialogData.qText, prompt:session.dialogData.prompt, repeat: true})
             }, 5000);
@@ -77,7 +82,7 @@ exports.createConfirmDialog = function (bot, recog) {
                 console.log("Allow skip");
                 session.endDialogWithResult({ response: -1 });
             } else {
-                session.send(unsureResponse || "Please answer yes or no! I'm still learning!");
+                session.send(unsureResponse || unsureArray);
                 timeDict[session.message.address.conversation.id] = setTimeout(function () { 
                 session.replaceDialog('/prompts/confirm', {questionText:session.dialogData.qText, prompt:session.dialogData.prompt, repeat: true})
             }, 5000);
@@ -85,6 +90,36 @@ exports.createConfirmDialog = function (bot, recog) {
         });
     bot.dialog('/prompts/confirm', prompt);
 }
+
+exports.beginSoftConfirmDialog = function (session, args) {
+    session.beginDialog('/prompts/softConfirm', args);
+}
+
+
+    bot.dialog('/prompts/softConfirm',
+        [
+            function (session, args, next) {
+                //Wait here
+                session.dialogData.initialArgs = args || session.dialogData.initialArgs;
+                session.send(session.dialogData.initialArgs.questionText);
+            },
+            function (session, args, next) {
+                if (args.type && args.type == "confirm") {
+                    if (args.response == 1) {
+                        session.endDialogWithResult({ response: 1 , type: "confirm"});
+                    } else {
+                        session.endDialogWithResult({ response: 0 , type: "confirm"});
+                    }
+                } else {
+                    session.endDialog();
+                }    
+            },
+            function (session, args, next) {
+                session.endDialog();
+            }
+        ]
+    );
+
 //ambiguous
 exports.beginMultiDialog = function (session, options) {
     console.log(options);
@@ -111,7 +146,7 @@ exports.createMultiDialog = function (bot, recog) {
             console.log("oljdhbsgd ");
                 session.send(session.dialogData.qText);
             }
-            unsureResponse = args.unsureResponse || getNonUnderstand();
+            unsureResponse = args.unsureResponse;
             allowSkip = false;
             if (args) {
                 if (args.skip) {

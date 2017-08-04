@@ -1,0 +1,1 @@
+module.exports.smile = '<span class="emoji emoji-smile">&lt; Smile &gt;</span>';

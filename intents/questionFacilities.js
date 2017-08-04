@@ -32,5 +32,5 @@ module.exports = function () {
             session.send("Ok then, maybe another time!");
             session.endDialog();
         } 
-    }]).triggerAction({ matches: /DCA\?/i });
+    }]).triggerAction({ matches: /DCATEST/ });
 }

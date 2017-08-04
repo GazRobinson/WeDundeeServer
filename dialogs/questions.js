@@ -325,6 +325,7 @@ function CreateDialog(rootKeyName, thisKeyName, qData) {
                     prompts.beginMultiDialog(session, {questionText:qData.text});
                 }, 
                 function (session, args) {
+                    //IF the user responded with a 'YES' or "NO", handle it
                     if (args.type && args.type == "confirm") {
                         console.log("conf type: " + args.response);
                         if (args.response == 1) {
@@ -340,8 +341,15 @@ function CreateDialog(rootKeyName, thisKeyName, qData) {
                             return;
                         } 
                     }
-                    console.log("else");
+                    //IF we got a proper response:
+                    //Log the response
+                    if (qData.logLocation && args.text) {
+                        console.log("Logging: " + args.text + " to " + qData.logLocation);
+                        global.SaveResponse(session, qData.logLocation, args.text);
+                    }
                     var expected;
+                    
+
                     if (qData.expectedResponse) {
                         expected = qData.expectedResponse;
                         if (args.response) {
