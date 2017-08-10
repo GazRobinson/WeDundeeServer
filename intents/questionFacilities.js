@@ -21,16 +21,21 @@ module.exports = function () {
             session.send("Do I look like Wikipedia?");
             session.endDialog();
         }    
-    }).triggerAction({ matches: 'question.facility' });
+    }).triggerAction({
+        matches: 'question.facility' ,
+        onSelectAction: (session, args, next) => {
+        session.beginDialog('/question.facility');
+    } }
+    );
 
     bot.dialog('/question.facility.DCA', [function (session, args) {        
 			prompts.beginConfirmDialog(session, {questionText: "Dundee Contemporary Arts Gallery is in the west end of Dundee and has a a gallery, cinema, shop, cafe and print studio. Would you like to visit their website?", skip:false});
     }, function (session, args) {
         if (args.response == 1) {
-            session.beginDialog('/otherSite');
+            session.beginDialog('/otherSite', {URL: "http://www.dca.org.uk"});
         } else {
             session.send("Ok then, maybe another time!");
             session.endDialog();
         } 
-    }]).triggerAction({ matches: /DCATEST/ });
+    }]).triggerAction({ matches: /HYPERLINKTEST/ });
 }

@@ -14,7 +14,6 @@ var ref;
 var timeoutMessages = [
     "Please stand by...",
     "Please stand by...",
-    "This is probably Google's fault.",
     "Let me find a joke.",
     "Okay Here it is.",
     "Why did the chicken cross the road?",
@@ -124,7 +123,8 @@ module.exports.init = function () {
                         return;
                 }
                 if (session.userData.questionCount < 3) {
-                    session.replaceDialog("/questions/intro");
+                    session.send(["Next up...", "The next on is...", "All right, next:", "Another one:", "What was next...? Oh yeah!",  "Oh this is a good one!", "This one has got some good responses!", "This is a favourite of mine!"]);
+                    global.Wait(session, function () { session.replaceDialog("/questions/intro"); }, 4000);
                 } else {
                     if (session.userData.usedQuestions.length < qArray.length) {
                         session.beginDialog("/questions/another");
@@ -197,7 +197,7 @@ module.exports.init = function () {
     bot.dialog('/questions/hearSecret',
         [
             function (session, args, next) {
-                prompts.beginSoftConfirmDialog(session, {questionText:"Would you like to hear a secret someone else has told me?"})
+                prompts.beginSoftConfirmDialog(session, {questionText:"Okay, I'm not supposed to say, but would you like to hear a secret someone else has told me?"})
             },
             function (session, args, next) {
                 if (args.response == 1) {
@@ -347,12 +347,30 @@ function CreateDialog(rootKeyName, thisKeyName, qData) {
                     }
                     //IF we got a proper response:
                     //Log the response
-                    if (qData.logLocation && args.text) {
-                        console.log("Logging: " + args.text + " to " + qData.logLocation);
-                        global.SaveResponse(session, qData.logLocation, args.text);
-                    }
-                    var expected;
                     
+                    var temp = args.text.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g,"")
+                    var expected;
+                    if (qData.invalidResponse) {
+                        expected = qData.invalidResponse;
+                        if (args.response) {
+                            session.dialogData.solved = false;
+                            for (i = 0; i < expected.length; i++) {
+                                for (j = 0; j < expected[i].answer.length; j++) {
+                                    var reg = temp.match(expected[i].answer[j]);
+                                    if (reg && reg.length > 0) {
+                                            session.dialogData.solved = true;
+                                            session.send(expected[i].response);
+	                                        session.sendTyping();
+                                            global.Wait(session, function () { 
+                                                session.replaceDialog("/" + rootKeyName + "/" + thisKeyName, { text: qData.text });
+                                            }, 6000);
+                                            return;
+                                         
+                                    }
+                                }
+                            }                            
+                        }
+                    } 
 
                     if (qData.expectedResponse) {
                         expected = qData.expectedResponse;
@@ -360,27 +378,28 @@ function CreateDialog(rootKeyName, thisKeyName, qData) {
                             session.dialogData.solved = false;
                             for (i = 0; i < expected.length; i++) {
                                 for (j = 0; j < expected[i].answer.length; j++) {
-
-                                    console.log("BACON");
-                                    console.log(args);
                                     var reg = args.text.match(expected[i].answer[j]);
                                     if (reg && reg.length > 0) {
-                                        if (!expected[i].responseDialog) {
-
-                                            session.dialogData.solved = true;
-                                            session.send(expected[i].response);
-                                            setTimeout(function () { session.endDialog(); }, 6000);
-                                            return;
-                                        } else {
+                                        if (expected[i].responseDialog) {
                                             global.WaitStop(session);
                                             session.beginDialog("/" + rootKeyName + "/" + expected[i].responseDialog);
-                                            return;
+                                            return;                                            
+                                        } else {
+                                            session.dialogData.solved = true;
+                                            session.send(expected[i].response);
+	                                        session.sendTyping();
+                                            setTimeout(function () { session.endDialog(); }, 6000);
+                                            return;                                            
                                         }    
                                     }
                                 }
                             }                            
                         }
                     } 
+                    if (qData.logLocation && args.text) {
+                        console.log("Logging: " + args.text + " to " + qData.logLocation);
+                        global.SaveResponse(session, qData.logLocation, args.text);
+                    }
                     if (qData.response != null) {
                         session.send(qData.response);
                     } else {

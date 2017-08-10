@@ -1,18 +1,6 @@
 
 module.exports.init = function () {
-    bot.dialog('/wrapUp/oneMore', [
-        function (session, args) {
-            prompts.beginConfirmDialog(session, {questionText: "Oh well. Can I ask you one last question?"});
-        },
-        function (session, args, next) {
-            if (args.response == 1) {
-                session.beginDialog("/questions/single");
-            } else {
-                session.beginDialog("/wrapUp/goodbye");
-            }
-        }
-    ]).triggerAction({ matches: /^WRAPUP/ }); 
-
+   
     bot.dialog('/wrapUp/goodbye', [
         function (session, args, next) {
             session.send("Ok, I guess that's all I have for you. Thanks for helping out and please follow We Dundee on Facebook to find out about changes we make here.");
@@ -33,7 +21,7 @@ module.exports.init = function () {
                 session.beginDialog("/wrapUp/feedbackNo");
             }
         }
-    ]);
+    ]).triggerAction({ matches: /^WRAPUP/ }); 
 
     bot.dialog('/wrapUp/feedbackYes', [
         function (session, args, next) {
@@ -53,7 +41,10 @@ module.exports.init = function () {
         },
         function (session, args, next) {
             session.userData.completed = true;
-            session.send("Bye bye!");
+            session.send({
+                type: 'close',
+                text: "Bye bye!"
+            });
             session.endDialog();
         }      
     ]);

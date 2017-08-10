@@ -129,9 +129,9 @@ module.exports.init = function () {
      bot.dialog('/picture/emailPicture',
         [
             function (session, args) {
-                session.send("Ok send it to photos@wedundee.com");
+                session.send('Ok send it to <a href="mailto:photos@wedundee.com">photos@wedundee.com</a>');
                 global.Wait(session, function () { session.endDialog(); }, 10000);
             }
         ]
-    ); 
+    ).triggerAction({ matches: /^EMAILTEST/ });  
 }

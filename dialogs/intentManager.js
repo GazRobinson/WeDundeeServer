@@ -22,7 +22,12 @@ module.exports = function () {
             session.endDialog();            
         }
     }
-    ]).triggerAction({ matches: 'question.location' });
+    ]).triggerAction({
+        matches: 'question.location' ,
+        onSelectAction: (session, args, next) => {
+        session.beginDialog('/question.location');
+    } }
+    );
 
 bot.dialog('/question.location.dundee', [function (session, args) {
     prompts.beginSoftConfirmDialog(session, {questionText: 'Dundee is on the east coast of Scotland, it sits facing south on the bank of the River Tay or the silvery Tay as people like to call it. Would you like to see a picture?'});

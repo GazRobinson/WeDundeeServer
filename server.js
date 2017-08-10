@@ -443,7 +443,7 @@ bot.dialog('/intro/confirmName',
 	]
 )
 
-function getWeatherIcon(icon) {
+global.getWeatherIcon = function (icon) {
 	switch (icon) {
 		case "clear-day":
 			return "clear skies"			
@@ -492,7 +492,7 @@ bot.dialog('/profile', [
 	function (session, args, next) {
 		CW = dialogs.weather.GetCurrentWeather();
 		weatherInfo.icon = CW.icon;
-		session.send('Welcome to We Dundee, where the weather is currently '+ CW.temperature + ' degrees and ' + getWeatherIcon(weatherInfo.icon));
+		session.send('Welcome to We Dundee, where the weather is currently '+ Math.round(CW.temperature) +String.fromCharCode(176)+ 'C and ' + getWeatherIcon(weatherInfo.icon));
 		HoldNext(session, { mood: getWeatherMood(weatherInfo.icon) });
 	},
 	function (session, args, next) {
@@ -583,7 +583,7 @@ function callback(results) {
 
 bot.dialog('/displayThought',
 	[
-		function (session, args) {
+		function (session, args, next) {
 			if (!session.dialogData.done) {
 				session.dialogData.done = true;
 				session.send("Here's something someone wanted to see in the city...");
@@ -594,16 +594,24 @@ bot.dialog('/displayThought',
 					if (posts.length > 0) {
 						console.log(posts[0]);
 						if (posts[0].content.length > 200) {
-							Wait(session, function () { session.send("Wow... It's a long one!"); }, 4000);
-							Wait(session, function () { session.send('"' + posts[0].content + '"'); }, 10000);
+							session.send("Wow... It's a long one!");
+							HoldNext(session, { thoughtText: posts[0].content }, 7000);
 						} else {
-							setTimeout(function () { session.send('"' + posts[0].content + '"') }, 5000);
+							HoldNext(session, { thoughtText: posts[0].content }, 7000);
 						}
 					}
-					Wait(session, function () { session.endDialog(); }, 10000);
-				
+			
 				});
-			}	
+			}			
+		},
+		function (session, args, next) {
+			console.log("THOUGHT TEXT");
+			console.log(args.thoughtText);
+			session.send(args.thoughtText);
+			HoldNext(session, {},10000);
+		},
+		function (session, args, next) {
+			session.endDialog();
 		}
 	]
 );
@@ -631,16 +639,19 @@ bot.dialog('/playMusic',
 bot.dialog('/otherSite',
 	[
 		function (session, args, next) {
-			var msg = new builder.Message().address(session.message.address);
+			/*var msg = new builder.Message().address(session.message.address);
 			msg.text("Taking you to an external site");
 			msg.textLocale('en-US');
 			msg.addAttachment({
 				contentType: "web/link",
 				contentUrl: 'http://www.dca.org.uk',
 				name: "DCA"
-			});
-			bot.send(msg);
-
+			});*/
+			if (args.URL) {
+				session.send('Here it is! <a href="' + args.URL + '" target="_blank">' + args.URL + '</a>');
+			} else {
+				session.send('Sorry! I seem to have lost the link. Please file a complaint with the appropriate bureau.');				
+			}
 			HoldNext(session);
 
 		}, function (session, args, next) {
@@ -718,17 +729,21 @@ bot.dialog('/location.permission', [
 ////////END DIALOGS///////
 bot.dialog('/askQuestion', [
 	function (session, args) {
-		session.send("What is it?");
+		session.send(args.qText || "What is your question?");
 		prompts.beginTextDialog(session);
 	},
 	function (session, args) {
-		SaveQuestion(session.userData.name, args.text);
-		session.send("I'll save that one for later. Once I have more information I'll get back to you!");
-		global.Wait(session, function () {
-			session.endDialog();
-		});
+		if (args.text.includes('?')) {
+			SaveQuestion(session.userData.name, args.text);
+			session.send("I'll save that one for later. Once I have more information I'll get back to you!");
+			global.Wait(session, function () {
+				session.endDialog();
+			});
+		} else {
+			session.replaceDialog('/askQuestion', { qText: "Can you try that again, but make sure it's a question this time?" });
+		}	
 	}
-]);
+]).triggerAction({ matches: /^QTEST/ });  
 
 bot.dialog('/quickAskQuestion', 
 	function (session, args) {

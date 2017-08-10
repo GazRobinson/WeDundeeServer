@@ -8,7 +8,14 @@ const thanks = [
     "Just doing my job!",
     "You're too kind"
 ];
-
+const profanityResponse = [
+    "Well, that's rude.",
+    "You kiss your mother with that mouth??",
+    "Are you just trying to upset me?",
+    "Hey, I'm not here to be abused.",
+    "Is there any need for that sort of behaviour?",
+    "Come on now. No need to be like that."
+];
 getRandomThanks = function () {    
     return thanks[Math.floor(Math.random() * thanks.length)];
 }
@@ -70,7 +77,12 @@ module.exports = function () {
         }
     }
     ]
-    ).triggerAction({ matches: 'greeting' });
+    ).triggerAction({
+        matches: 'greeting' ,
+        onSelectAction: (session, args, next) => {
+        session.beginDialog('/greeting');
+    } }
+    );
     
     //ShowMe
     bot.dialog('/showThought',
@@ -84,6 +96,7 @@ module.exports = function () {
                     console.log(builder.EntityRecognizer.findEntity(args.intent.entities, 'botThing'));
                     console.log(args.intent.entities[0].resolution);
                     if (builder.EntityRecognizer.findEntity(args.intent.entities, 'botThing').resolution.values[0] == "thought") {
+                        console.log("farts");
                         session.beginDialog('/displayThought');
                     } else if (builder.EntityRecognizer.findEntity(args.intent.entities, 'botThing').resolution.values[0] == "picture") {
                         console.log("Getting picture");
@@ -204,6 +217,10 @@ module.exports = function () {
     [
         function (session, args) {
             session.send(getRandomThanks());
+            HoldNext(session);
+        }, 
+        function (session, args) {
+            session.endDialog();
         }
     ]
     ).triggerAction({ matches: 'gratitude',
@@ -212,6 +229,22 @@ module.exports = function () {
             }
         });    
 
+    bot.dialog('/profanity',
+    [
+        function (session, args) {
+            session.send(profanityResponse);
+            HoldNext(session);
+        }, 
+        function (session, args) {
+            session.endDialog();
+        }
+    ]
+    ).triggerAction({ matches: 'profanity',
+        onSelectAction: (session, args, next) => {    
+        session.beginDialog('/profanity');
+            }
+        });  
+    
      bot.dialog('/botInquire',
     [
         function (session, args) {
@@ -244,11 +277,41 @@ module.exports = function () {
                 session.endDialog();
             }
     ]
-    ).triggerAction({ matches: 'question.population' });    
+     ).triggerAction({
+        matches: 'question.population' ,
+        onSelectAction: (session, args, next) => {
+        session.beginDialog('/population');
+    } }
+    );  
+
+    bot.dialog('/interrupt/changeName',
+        [
+            function (session, args, next) {
+                prompts.beginConfirmDialog(session, {questionText: "Oh! You're not " + session.userData.name + "? Would you like to change your name?", skip:false});
+            }, 
+            function (session, args, next) {            
+                if (args.response == 1) {                    
+                    session.send("Sorry for the confusion! I thought you looked like " + session.userData.name + ". Let's start over!");
+                    global.ResetData(session);
+                    HoldDialog(session, '/intro');
+                } else if (args.response == 0 || args.response == 2) {
+                    session.send("Well now you're just TRYING to confuse me...");
+                    HoldNext(session);
+                } 
+            },
+            function (session, args, next) {                 
+                session.endDialog();
+            }
+    ]
+    ).triggerAction({
+        matches: 'intent.changeName' ,
+        onSelectAction: (session, args, next) => {
+        session.beginDialog('/interrupt/changeName');
+    } }
+    );
      
     bot.dialog('sec', function (session) {
-        
-        session.beginDialog('/loadSecret');
+        session.beginDialog('/otherSite');
     }).triggerAction({ matches: /^FAME/ });  
 
     // RESET

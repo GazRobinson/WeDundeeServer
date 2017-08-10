@@ -4,7 +4,7 @@ var Forecast = require('forecast');
 
 var currentForecast;
 function getWeather() {
-	return "It's " + currentForecast.currently.summary + " with a temperature of " + currentForecast.currently.temperature + " degrees!";
+    return "It's currently " + Math.round(currentForecast.currently.temperature) + String.fromCharCode(176) + 'C and ' + global.getWeatherIcon(weatherInfo.icon);
 }
 
 module.exports.GetCurrentWeather = function () {
@@ -67,5 +67,10 @@ module.exports.init = function () {
         console.log(args);
         var intent = args.intent;
             session.beginDialog('weather', intent);
-    }).triggerAction({ matches: 'checkWeather' });
+    }).triggerAction({
+        matches: 'checkWeather' ,
+        onSelectAction: (session, args, next) => {
+        session.beginDialog('weatherTest');
+    } }
+    );
 }

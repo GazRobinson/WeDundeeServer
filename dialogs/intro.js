@@ -1,8 +1,8 @@
 module.exports.init = function () {
     var helloArray = [
-        { message: "Hello " + global.emoji.smile, time: 10000 },
+        { message: "Hello " + global.emoji.smile, time: 15000 },
+        { message: "You can talk to me by typing on your keyboard", time: 60000 }/*,
         { message: "Hi?", time: 10000 },
-        { message: "You can talk to me by typing on your keyboard", time: 12000 }/*,
         { message: "Type something to me", time: 14000 },
         { message: "Well, not something. Try 'Hello'!", time: 15000 },
         { message: "Okay. Well I, er... I've got places to be so...", time: 10000 },
@@ -19,16 +19,12 @@ module.exports.init = function () {
                 session.send(helloArray[count].message);
                 var time = helloArray[count].time;  
                 count++;
-                if (count < helloArray.length) {
-                    timeDict[session.message.user.id] = setTimeout(function () {
-                        session.replaceDialog('/intro/start', { waiting: true, count: count });
-                    }, 10000);
-                } else {
+                if (count >= helloArray.length) {
                     count = 0;
+                }  
                     timeDict[session.message.user.id] = setTimeout(function () {
                         session.replaceDialog('/intro/start', { waiting: true, count: count });
                     }, time);
-                }  
             }
         ]
     )

@@ -14,7 +14,7 @@ module.exports.init = function () {
                 if (!session.userData.knowsWhatsUp) {
                     prompts.beginSoftConfirmDialog(session, {questionText: "So " + session.userData.name + ", would you like to know what I'm up to?"});
                 } else {
-                    session.replaceDialog('/beginning/answerQuestionsAlt');
+                    session.replaceDialog('/beginning/siteDesign');
                 }    
             },
             function (session, args, next) {
@@ -59,7 +59,36 @@ module.exports.init = function () {
                 session.endDialog();
             }
         ]
-    ).triggerAction({ matches: /^INT/ }); 
+    ); 
+    bot.dialog('/beginning/siteDesign2',
+        [
+            function (session, args, next) {
+                if (!session.userData.knowsAboutQuestions) {
+                    prompts.beginSoftConfirmDialog(session, { questionText: "This site looks a little bare don’t you think?" });
+                } else {
+                    next({ response: 1 });
+                }
+            },
+            function (session, args, next) {
+                if (args.response == 1) {
+                    prompts.beginSoftConfirmDialog(session, { questionText: "Would you like a nice picture of Dundee in the background?" });
+                } else {
+                    session.send("Ok, I guess I just don’t like minimal design.")
+                    HoldNext(session, { response: 0 });
+                }
+            },function (session, args, next) {
+                if (args.response == 1) {
+                    session.beginDialog('/media/requestPicture');
+                } else {
+                    next();
+                }
+            }, function (session, args, next) {          
+                HoldDialog(session, '/beginning/doQuestions');
+            }, function (session, args, next) {                
+                session.endDialog();
+            }
+        ]
+    ); 
 
     bot.dialog('/beginning/rejoin',
         [
@@ -86,41 +115,25 @@ module.exports.init = function () {
     bot.dialog('/beginning/answerQuestions',
         [
             function (session, args) {
-                prompts.beginSoftConfirmDialog(session, {questionText: "So do you want to answer some questions now?"});
-            }, 
+                prompts.beginSoftConfirmDialog(session, { questionText: "So do you want to answer some questions now?" });
+            },
             function (session, args, next) {
                 if (args.response == 1) {
                     if (!session.userData.knowsAboutQuestions) {
                         session.beginDialog('/beginning/doQuestions');
                     } else {
                         session.beginDialog("/questions/intro");
-                    }    
+                    }
                 } else {
                     session.send("Awkward...");
                     HoldDialog(session, '/beginning/secondRefusal');
                 }
-            },function (session, args, next) {
+            }, function (session, args, next) {
                 session.endDialog();
             }
         ]
-    )
-    bot.dialog('/beginning/answerQuestionsAlt',
-        [
-            function (session, args) {
-                prompts.beginSoftConfirmDialog(session, {questionText:"Do you want to answer some questions?"});
-            }, 
-            function (session, args, next) {
-                if (args.response == 1) {
-                    session.beginDialog("/questions/intro");
-                } else {
-                    session.userData.questionCount += 1;
-                    session.beginDialog('/beginning/secondRefusal');
-                }
-            },function (session, args, next) {
-                session.endDialog();
-            }
-        ]
-    )
+    );
+    
     bot.dialog('/beginning/doQuestions',
         [
             function (session, args, next) {
@@ -147,8 +160,8 @@ module.exports.init = function () {
             },
             function (session, args, next) {
                 if (args.response == 1) {
-                    session.send("Good. Let's get started.");
-                    HoldDialog(session, "/beginning/doQuestions");
+                    session.send("Okay, first of all");
+                    HoldDialog(session, "/beginning/siteDesign2");
                 } else {
                     session.beginDialog("/beginning/secondRefusal")
                 }
