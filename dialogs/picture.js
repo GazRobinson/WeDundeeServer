@@ -43,7 +43,7 @@ module.exports.init = function () {
             },
             function (session, args, next) {
                 if (args.response == 1) {
-                    session.beginDialog('/picture/uploadPicture');
+                    session.beginDialog('/picture/onComputer');
                 } else {
                     session.send("Thats fine, you can come back and add it later when you do.");
                     global.Wait(session, function () { console.log("END");session.endDialog(); }, 4000); 
@@ -66,7 +66,7 @@ module.exports.init = function () {
                 if (args.response == 1) {
                     session.beginDialog('/picture/onComputer');
                 } else {
-                    session.send("Ok then!");
+                    session.send("Ok then! Let's get to the questions!");
                     global.Wait(session, function () { session.beginDialog('/beginning/rejoin'); }, 4000); 
                 }
             },function (session, args, next) {
@@ -78,11 +78,11 @@ module.exports.init = function () {
     bot.dialog('/picture/onComputer',
         [
             function (session, args) {        
-                prompts.beginConfirmDialog(session, {questionText: "Ok, do you have it on your computer now?"});                      
+                prompts.beginConfirmDialog(session, {questionText: "Ok, do you have it on your device now?"});                      
             },
             function (session, args, next) {
                 if (args.response == 1) {
-                    session.beginDialog('/picture/uploadPicture');
+                    session.beginDialog('/uploadTest');
                 } else {
                     session.beginDialog('/picture/orEmail');
                 }

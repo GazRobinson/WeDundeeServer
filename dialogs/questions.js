@@ -123,7 +123,7 @@ module.exports.init = function () {
                         return;
                 }
                 if (session.userData.questionCount < 3) {
-                    session.send(["Next up...", "The next on is...", "All right, next:", "Another one:", "What was next...? Oh yeah!",  "Oh this is a good one!", "This one has got some good responses!", "This is a favourite of mine!"]);
+                    session.send(["Next up...", "The next on is...", "All right, next question", "Time for another one", "What was next...? Oh yeah!",  "Oh this is a good one!", "This one has got some good responses!", "This is a favourite of mine!"]);
                     global.Wait(session, function () { session.replaceDialog("/questions/intro"); }, 4000);
                 } else {
                     if (session.userData.usedQuestions.length < qArray.length) {
@@ -234,7 +234,7 @@ module.exports.init = function () {
         [
             function (session, args, next) {
                 if (!session.userData.askedAQuestion) {
-                    prompts.beginMultiDialog(session, {questionText: "Ok before we go, do you have a question you would like to ask the people of Dundee?"});
+                    prompts.beginMultiDialog(session, {text: "Ok before we go, do you have a question you would like to ask the people of Dundee?"});
                 } else {
                     session.endDialog();
                 }
@@ -321,12 +321,11 @@ function CreateDialog(rootKeyName, thisKeyName, qData) {
         bot.dialog("/" + rootKeyName + "/" + thisKeyName,
             [
                 function (session, args) {
+                    var sendText = qData.text
                     if (args && args.clarified) {
-                        session.send(args.text);                        
-                    } else {
-                        session.send(qData.text);
+                        sendText = args.text;                        
                     }    
-                    prompts.beginMultiDialog(session, {questionText:qData.text});
+                    prompts.beginMultiDialog(session, {text:sendText});
                 }, 
                 function (session, args) {
                     //IF the user responded with a 'YES' or "NO", handle it
@@ -362,7 +361,9 @@ function CreateDialog(rootKeyName, thisKeyName, qData) {
                                             session.send(expected[i].response);
 	                                        session.sendTyping();
                                             global.Wait(session, function () { 
-                                                session.replaceDialog("/" + rootKeyName + "/" + thisKeyName, { text: qData.text });
+                                                session.endDialog();
+                                                
+                                               // session.replaceDialog("/" + rootKeyName + "/" + thisKeyName, { text: qData.text });
                                             }, 6000);
                                             return;
                                          
@@ -434,18 +435,24 @@ function CreateDialog(rootKeyName, thisKeyName, qData) {
                 function (session, args) {
                     session.send(qData.text);
                     if (!qData.next) {
-                        setTimeout(function () { session.endDialog(); }, 4000);
+                        setTimeout(function () { session.endDialog(); }, 7000);
                     } else {
-                        setTimeout(function () { session.beginDialog(qData.next); }, 5000);                        
+                        setTimeout(function () { session.beginDialog(qData.next); }, 7000);                        
                     }    
+                }, function (session, args, next) {
+                    session.endDialog();                    
                 }
+
             ]                    
         ) 
     }   else if (qData.type == "link") {
         bot.dialog("/" + rootKeyName + "/" + thisKeyName,
             [
                 function (session, args) {
-                    global.Wait(session, function () { session.beginDialog(qData.dialog, qData.args); }, 5000);                      
+                    console.log()
+                    global.Wait(session, function () { session.beginDialog(qData.dialogLocation, qData.args); }, 5000);                      
+                }, function (session, args, next) {
+                    session.endDialog();                    
                 }
             ]                    
         ) 

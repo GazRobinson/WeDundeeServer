@@ -1,6 +1,9 @@
 const config = require('./config.js')
 require('./connectorSetup.js')();
-require('dotenv').config()
+require('dotenv').config();
+var fs = require('fs');
+var mime = require('mime');
+var request = require('request');
 global.questionsLoaded = false;
 global.prompts = require('./dialogs/prompts.js');
 const defaultDialog = require('./dialogs/default.js')
@@ -55,6 +58,38 @@ var ref = db.ref("server/saving-data/questions");
 var secretsRef = db.ref("server/saving-data/responses/secret/answers");
 global.responseRef = db.ref("server/saving-data/responses");
 LoadSecrets();
+
+const keyFilename="./wedundeebot-firebase-adminsdk-ibkp7-c6ba8d1dd7.json"; //replace this with api key file
+const projectId = "wedundeebot" //replace with your project id
+const bucketName = `wedundeebot.appspot.com`;
+
+const gcs = require('@google-cloud/storage')({
+    projectId,
+    keyFilename
+});
+
+const bucket = gcs.bucket(bucketName);
+
+global.UploadFile = function (filePath, uploadTo, callback) {
+	fileMime = mime.lookup(filePath);
+	bucket.upload(filePath, {
+		destination: uploadTo,
+		public: true,
+		metadata: { contentType: fileMime, cacheControl: "public, max-age=300" }
+	},
+	function (err, file) {
+		if (err) {
+			console.log(err);
+			return;
+		}
+		console.log(createPublicFileURL(uploadTo));
+		fs.unlink(filePath, function () { console.log("Cleanup successful");});
+	} );
+}
+
+function createPublicFileURL(storageName) {
+    return `http://storage.googleapis.com/${bucketName}/${encodeURIComponent(storageName)}`;
+}
 
 dialogs.questions = require('./dialogs/questions.js');
 dialogs.questions.init();
@@ -132,16 +167,38 @@ prompts.createTextDialog(bot, recognizer);
 prompts.createMultiDialog(bot, recognizer);
 
 
+var download = function(uri, filename, callback){
+  request.head(uri, function(err, res, body){
+    /*console.log('content-type:', res.headers['content-type']);
+    console.log('content-length:', res.headers['content-length']);*/
+
+    request(uri).pipe(fs.createWriteStream(filename)).on('close', callback);
+  });
+};
+
 var updateCount = 0;
 /////////DIALOGS/////////
 /////
 
 bot.on('incoming', function (message) {
 	bot.loadSession(message.address, function (err, session) {
-			if (err)
-				console.log("ERR: " + err);
-		
-		});
+	
+	if (message.attachments.length > 0) {
+		console.log("Got an attachment");
+		download(message.attachments[0].contentUrl,
+			'temp'+session.userData.name+'.png',
+			function () {
+				console.log('done');
+				UploadFile('./temp' + session.userData.name + '.png', "subfolder/images/" + session.userData.name + ".png"
+					
+				)
+			}
+		);
+	}
+		if (err)
+			console.log("ERR: " + err);
+	
+	});
 }
 );	
 bot.on('routing', function (session) {
@@ -534,13 +591,13 @@ bot.dialog('/askName',
 	[
 		function (session, args) {	
 			args = args || {};
-			prompts.beginMultiDialog(session, { text: args.text || 'So, what is your name?', threshold: 0.75 });
+			prompts.beginMultiDialog(session, { text: args.text || 'So, what is your name?', threshold: 0.9 });
 		},
 	function (session, args, next) {
 		if (args.type && args.type == "confirm") {
 			if (args.response == 1) {
 				prompts.beginTextDialog(session, { text: 'Well, what is your name then?' });				
-			} else if (args.response == 0) {
+			} else {
 				session.replaceDialog('/askName', { text: "Oh go on! Please?" });
 				return
 			}
@@ -729,7 +786,11 @@ bot.dialog('/location.permission', [
 ////////END DIALOGS///////
 bot.dialog('/askQuestion', [
 	function (session, args) {
-		session.send(args.qText || "What is your question?");
+		if (args) {
+			session.send(args.qText || "What is your question?");
+		} else {
+			session.send( "What is your question?");			
+		}	
 		prompts.beginTextDialog(session);
 	},
 	function (session, args) {
@@ -800,6 +861,7 @@ bot.dialog('/loadSecret', [
 			session.send(secretss[Math.floor(Math.random() * secretss.length)]);
 		}	
 		global.Wait(session, function () {
+			console.log("endSecret");
 			session.endDialog();
 		});
 	}

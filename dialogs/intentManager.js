@@ -25,7 +25,7 @@ module.exports = function () {
     ]).triggerAction({
         matches: 'question.location' ,
         onSelectAction: (session, args, next) => {
-        session.beginDialog('/question.location');
+        session.beginDialog('/question.location', args);
     } }
     );
 

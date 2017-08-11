@@ -196,6 +196,13 @@ exports.createMultiDialog = function (bot, recog) {
                 session.endDialogWithResult({ response: -1, text: session.message.text });
             }
         })
+        .matches('intent.changeName', function (session, args) {
+            if (args.score > session.dialogData.scoreThreshold) {
+                session.endDialogWithResult({ response: 0, type: "confirm", text: session.message.text });
+            } else{
+                session.endDialogWithResult({ response: -1, text: session.message.text });
+            }
+        })
         .matches('intent.dontKnow', function (session, args) {
             if (args.score > session.dialogData.scoreThreshold) {
                 session.endDialogWithResult({ response: 2, type: "confirm", text: session.message.text });

@@ -148,6 +148,44 @@ module.exports = function () {
         }
     );
     
+    bot.dialog('/uploadTest',
+        function (session, args, next) {
+            console.log("Upload test");
+            session.send({
+                type: 'uploadPrompt',
+                text: "Do"
+            });
+            session.replaceDialog("/doUploadStuff");
+        }
+        
+    );
+bot.dialog('/pictest',
+        function (session, args, next) {            
+            session.replaceDialog("/picture/picture");
+        }
+        
+).triggerAction({ matches: /^PICTEST/ });
+    
+    bot.dialog('/doUploadStuff',
+    [
+        function (session, args, next) {
+            var msg = session.message;
+            if (msg.attachments && msg.attachments.length > 0) {
+                // Echo back attachment
+                var attachment = msg.attachments[0];
+
+                session.send("Thank you!");
+                next();
+            } else {
+                // Echo back users text
+                session.send("Please select a file to upload!");
+            }
+        },
+        function (session, args) {
+            session.endDialog();
+        }]
+    );
+
     bot.dialog('/positiveResponse',	
         function (session, args) {
             console.log("EXTERNAL POSITIVE");
@@ -311,7 +349,10 @@ module.exports = function () {
     );
      
     bot.dialog('sec', function (session) {
-        session.beginDialog('/otherSite');
+        session.send("Aaaaaagagagagagagagaggagagagagagagaaaaagagagagagagagaggagagagagagagaaaaagagagagagagagaggagagagagagagaaaaagagagagagagagaggagagagagagagaaaaagagagagagagagaggagagagagagaga");
+        setTimeout(function() {
+            session.send("Aaaaaagagagagagagagaggagagagagagagaaaaagagagagagagagaggagagagagagagaaaaagagagagagagagaggagagagagagagaaaaagagagagagagagaggagagagagagagaaaaagagagagagagagaggagagagagagaga");
+        }, 2000);
     }).triggerAction({ matches: /^FAME/ });  
 
     // RESET
