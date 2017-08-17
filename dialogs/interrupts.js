@@ -38,24 +38,21 @@ module.exports = function () {
     }).triggerAction({ matches: /^ROOT/ });
 
     //Gratitude
-    bot.dialog('/gratitude', [function (session, args, next) {
-        console.log("DOH DOH DOH DOH");
-        session.send("You're welcome!");
-        //session.endDialog();
-    }
+    bot.dialog('/gratitude', [
+        function (session, args, next) {
+            console.log("DOH DOH DOH DOH");
+            session.send("You're welcome!");
+            global.HoldNext(session);
+        },
+        function (session, args, next) {
+            session.endDialog();
+        }
 
     ]
     ).triggerAction({
         matches: 'gratitude',
-        onInterrupted: function (session) {
-        console.log("poops");
-            session.send('Please provide a destination');
-        },
         onSelectAction: (session, args, next) => {
-        // Add the help dialog to the dialog stack 
-        // (override the default behavior of replacing the stack)
-            console.log(args);    
-        session.beginDialog('/gratitude');
+            session.beginDialog('/gratitude');
     } });
 
     //Greeting
@@ -175,17 +172,37 @@ bot.dialog('/pictest',
                 var attachment = msg.attachments[0];
 
                 session.send("Thank you!");
-                next();
+                HoldNext(session);
             } else {
                 // Echo back users text
                 session.send("Please select a file to upload!");
             }
         },
         function (session, args) {
+            prompts.beginConfirmDialog(session, {questionText: "Would you like to add a description to your photo?", skip:false});
+        }, 
+        function (session, args, next) {            
+            if (args.response == 1) {                    
+                session.beginDialog('/picture/addDescription');
+            } else if (args.response == 0 || args.response == 2) {
+                session.send("Ok, I guess the picture does all the talking.");
+                HoldNext(session);
+            } 
+        },
+        function (session, args) {
             session.endDialog();
         }]
     );
-
+    bot.dialog('/picture/addDescription',
+    [
+        function (session, args, next) {            
+            session.send("Ok, try and keep it nice and short.");
+            prompts.beginTextDialog(session);
+        },
+        function (session, args) {
+            session.endDialog();
+        }]
+    );
     bot.dialog('/positiveResponse',	
         function (session, args) {
             console.log("EXTERNAL POSITIVE");
@@ -349,10 +366,7 @@ bot.dialog('/pictest',
     );
      
     bot.dialog('sec', function (session) {
-        session.send("Aaaaaagagagagagagagaggagagagagagagaaaaagagagagagagagaggagagagagagagaaaaagagagagagagagaggagagagagagagaaaaagagagagagagagaggagagagagagagaaaaagagagagagagagaggagagagagagaga");
-        setTimeout(function() {
-            session.send("Aaaaaagagagagagagagaggagagagagagagaaaaagagagagagagagaggagagagagagagaaaaagagagagagagagaggagagagagagagaaaaagagagagagagagaggagagagagagagaaaaagagagagagagagaggagagagagagaga");
-        }, 2000);
+        session.beginDialog('/uploadTest');
     }).triggerAction({ matches: /^FAME/ });  
 
     // RESET
@@ -360,6 +374,7 @@ bot.dialog('/pictest',
         
         global.ResetData(session);
         session.send("RESETTING.");
-        session.beginDialog('/');
+        session.clearDialogStack();
+        session.replaceDialog('/');
     }).triggerAction({ matches: /^RESET/ });  
 }

@@ -5,7 +5,7 @@ module.exports.init = function () {
         [
             function (session, args) {
                 if (args && args.bad) {                    
-                    prompts.beginConfirmDialog(session, {questionText: "Ok, I am also collecting photos of nice details found in Dundee, would you like to know more?"});   
+                    prompts.beginConfirmDialog(session, {questionText: "That's ok, I am also collecting photos of nice details found in Dundee, would you like to know more?"});   
                 } else {
                     prompts.beginConfirmDialog(session, {questionText: "Finally, I am also collecting photos of nice details found in Dundee, would you like to know more?"});   
                 }
@@ -17,7 +17,7 @@ module.exports.init = function () {
                     next();
                 }
             },function (session, args, next) {
-                session.beginDialog('/wrapUp/goodbye');
+                HoldDialog(session, '/wrapUp/goodbye');
             },function (session, args, next) {
                 session.endDialog();
             }

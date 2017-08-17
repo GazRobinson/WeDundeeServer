@@ -4,11 +4,11 @@ module.exports.init = function () {
     bot.dialog('/wrapUp/goodbye', [
         function (session, args, next) {
             session.send("Ok, I guess that's all I have for you. Thanks for helping out and please follow We Dundee on Facebook to find out about changes we make here.");
-            global.Wait(session, next, 12000);
+            global.HoldNext(session, {}, 12000);
         },
         function (session, args, next) {
             session.send("Oh wait! I'm meant to ask you what you thought of our service!");
-            global.Wait(session, next, 7000);
+            global.HoldNext(session, {}, 7000);
         },
         function (session, args, next) {
             prompts.beginConfirmDialog(session, {questionText: "Would you like to leave some feedback?"});
@@ -16,9 +16,9 @@ module.exports.init = function () {
         function (session, args, next) {
             if (args.response == 1) {
                 //random question
-                session.beginDialog("/wrapUp/feedbackYes");
+                HoldDialog(session, '/wrapUp/feedbackYes');
             } else {
-                session.beginDialog("/wrapUp/feedbackNo");
+                HoldDialog(session, '//wrapUp/feedbackNo');
             }
         }
     ]).triggerAction({ matches: /^WRAPUP/ }); 

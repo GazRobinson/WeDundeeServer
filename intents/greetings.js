@@ -6,7 +6,7 @@ exports.getGreetings = () => {
 	'Hello',
 	'Bonjour',
 		'Hey',
-		'Hiya :)',
+		'Hiya ' + emoji.smile,
 		'Yo',
 		'Hello',
 	'Hello!']
@@ -63,7 +63,7 @@ exports.getBackendQuestion = () => {
 exports.getQuestionResponse = () => {
 	const answers = [
 		"I'll be sure to let the world know",
-		"Thanks :)  I'll remember this for the future!"
+		"Thanks " + emoji.smile + " I'll remember this for the future!"
 	]
 	return answers[Math.floor(Math.random() * answers.length)]
 }
@@ -71,8 +71,8 @@ exports.getUnsureResponse = () => {
 	const answers = [
 		"Nevermind!",
 		"Don't know? Okay, just thought I'd ask!",
-		"Don't worry about it! :)",
-		"Thanks anyway! :)"
+		"Don't worry about it! " + emoji.smile ,
+		"Thanks anyway! " + emoji.smile 
 	]
 	return answers[Math.floor(Math.random() * answers.length)]
 }

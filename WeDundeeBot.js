@@ -248,7 +248,7 @@ bot.dialog('ROOT', function (session) {
 
 bot.dialog('/askQuestion', [
     function (session, args) {
-		builder.Prompts.confirm(session, 'Do you have a question about Dundee?');
+		builder.Prompts.confirm(session, 'So, what would you like to know about Dundee?');
     },
 	function (session, results) {
 		if (results.response) {

@@ -45,22 +45,14 @@ admin.initializeApp({
 	databaseURL: "https://wedundeebot.firebaseio.com"
 });
 
-// Get a database reference to our blog
-global.SendMessage = function (session, message) {
-	console.log("Send messsage: " + session.userData.name);
-	
-	session.conversationData.messageStack.push(message);
-	session.send(message);
-}
-
 module.exports.db = db = admin.database();
 var ref = db.ref("server/saving-data/questions");
 var secretsRef = db.ref("server/saving-data/responses/secret/answers");
 global.responseRef = db.ref("server/saving-data/responses");
 LoadSecrets();
 
-const keyFilename="./wedundeebot-firebase-adminsdk-ibkp7-c6ba8d1dd7.json"; //replace this with api key file
-const projectId = "wedundeebot" //replace with your project id
+const keyFilename="./wedundeebot-firebase-adminsdk-ibkp7-c6ba8d1dd7.json";
+const projectId = "wedundeebot"
 const bucketName = `wedundeebot.appspot.com`;
 
 const gcs = require('@google-cloud/storage')({
@@ -418,10 +410,14 @@ bot.dialog('/confirmIdentity', [
             function (session, args) {
                 session.beginDialog('/profile');
             },
-            function (session, results, next) {
+			function (session, results, next) {
+				if (!session.userData.name) {
+					session.replaceDialog('/intro');
+					return;
+				}
                 if (session.userData.name.includes(" ")) {
                     session.beginDialog("/intro/confirmName");
-                } else {
+				} else {
                     next();
                 }
             },
@@ -438,6 +434,8 @@ bot.dialog('/confirmIdentity', [
         ]
     );
 
+	
+
 bot.dialog('/intro/confirmName',
 	[
 		//TODO: better handling
@@ -447,7 +445,7 @@ bot.dialog('/intro/confirmName',
 		},
 		function (session, args, next) {
 			if (args.response == 1) {
-				session.userData.name = session.userData.name.split(' ')[0];
+				session.userData.name = ToUpper( session.userData.name.split(' ')[0]);
 				session.endDialog();
 			} else {
 				prompts.beginConfirmDialog(session, {questionText: "Well how about " + session.userData.name.split(' ')[1] + "?"});
@@ -455,7 +453,7 @@ bot.dialog('/intro/confirmName',
 		},
 		function (session, args, next) {
 			if (args.response == 1) {
-				session.userData.name = session.userData.name.split(' ')[1];
+				session.userData.name = ToUpper(session.userData.name.split(' ')[1]);
 				session.endDialog();
 			} else {
 				prompts.beginConfirmDialog(session, {questionText: "Ok then. I am just going to call you 'Human'... You are human aren't you?"});
@@ -564,7 +562,7 @@ bot.dialog('/profile', [
 				msg = "Hmmm… a bit more sun would be nice.";		
 				break;
 			case "bad":
-				msg = "Ok. That’s doesn't sound great, hope you have a coat.";	
+				msg = "Ok. That doesn't sound great, hope you have a coat.";	
 				break;
 			case "night":
 				msg = "Isn't this past your bed time?";	
@@ -581,7 +579,6 @@ bot.dialog('/profile', [
 		session.beginDialog('/askName');
 	},
 	function (session, results) {
-		session.userData.name = results.text;
 
 		session.endDialog();
 	}
@@ -606,7 +603,12 @@ bot.dialog('/askName',
 		}
 	},
 	function (session, args) {
-		session.endDialogWithResult(args);
+		if (args.text.length < 2) {
+			session.send("There's no way that's your name!");
+		} else {
+			session.userData.name = ToUpper(args.text);
+			session.endDialogWithResult(args);
+		}	
 	}
 ])
 
@@ -643,7 +645,8 @@ bot.dialog('/displayThought',
 		function (session, args, next) {
 			if (!session.dialogData.done) {
 				session.dialogData.done = true;
-				session.send("Here's something someone wanted to see in the city...");
+				session.send("Here's something someone wanted to see in the city back in 2013...");
+				session.sendTyping();
 				console.log("Getting thought");
 				wpClient.getPosts({ post_type: 'thoughts', number: 1, offset: Math.floor(Math.random() * 1000) }, function (error, posts) {
 					if (error) console.log(error);
@@ -797,9 +800,7 @@ bot.dialog('/askQuestion', [
 		if (args.text.includes('?')) {
 			SaveQuestion(session.userData.name, args.text);
 			session.send("I'll save that one for later. Once I have more information I'll get back to you!");
-			global.Wait(session, function () {
-				session.endDialog();
-			});
+			session.endDialog();
 		} else {
 			session.replaceDialog('/askQuestion', { qText: "Can you try that again, but make sure it's a question this time?" });
 		}	
@@ -861,6 +862,7 @@ bot.dialog('/loadSecret', [
 			session.send(secretss[Math.floor(Math.random() * secretss.length)]);
 		}	
 		global.Wait(session, function () {
+			session.sendTyping();
 			console.log("endSecret");
 			session.endDialog();
 		});
@@ -983,6 +985,31 @@ bot.dialog('/wait/dialog',[
 		}	
 	}	]
 );
+bot.dialog('/wait/replaceDialog',[
+	function (session, args, next) {
+		if (!session.dialogData.begun) {
+			console.log("Begin replace dialog wait");
+			session.dialogData.waitArgs = args;
+			session.dialogData.begun = true;
+			global.Wait(session, function () { 
+				next(args);
+			}, session.dialogData.waitArgs.time);
+		} else {
+			console.log("WAIT!!");
+			session.send("WAIT");
+		}	
+	},
+	function (session, args, next) {
+			console.log("Now here for: ");
+			console.log( session.dialogData.waitArgs);
+		if (session.dialogData.waitArgs.passthrough) {
+			session.replaceDialog(session.dialogData.waitArgs.nextDialog, session.dialogData.waitArgs.passthrough);
+		} else {
+			session.replaceDialog(session.dialogData.waitArgs.nextDialog);
+		}	
+	}
+]
+);
 bot.dialog('/wait/next', [
 	function (session, args, next) {
 		if (!session.dialogData.begun) {
@@ -1008,37 +1035,52 @@ bot.dialog('/wait/next', [
 		}	
 	}	]
 );
-
-bot.dialog('/wait/function',[
+bot.dialog('/wait/end', [
 	function (session, args, next) {
 		if (!session.dialogData.begun) {
+			console.log("Begin wait");
 			session.dialogData.waitArgs = args;
 			session.dialogData.begun = true;
-			global.Wait(session, function () { next(); }, session.dialogData.waitArgs.time);
+			global.Wait(session, function () {
+				next(args);
+			}, session.dialogData.waitArgs.time);
 		} else {
+			console.log("WAIT!!");
 			session.send("WAIT");
-		}	
+		}
 	},
 	function (session, args, next) {
 		if (session.dialogData.waitArgs.passthrough) {
-			session.replaceDialog(session.dialogData.waitArgs.dialogName, session.dialogData.waitArgs.passthrough);
+			console.log("Passthrough");
+			console.log(session.dialogData.waitArgs.passthrough);
+			session.endDialog(session.dialogData.waitArgs.passthrough);
 		} else {
-			session.replaceDialog(session.dialogData.waitArgs.dialogName);
+			session.endDialog();
 		}	
-	}
-]
+	}	]
 );
+
 
 global.HoldDialog = function (session, dialogName, args, time) {
 	console.log("holding: " + dialogName);
 	session.sendTyping();
 	session.beginDialog('/wait/dialog', { nextDialog: dialogName, time: time ? time : global.defaultTime, passthrough: args || {} });
 }
-global.HoldFunction = function (session, func, args, time) {
+global.HoldReplace = function (session, dialogName, args, time) {
+	console.log("Hold Replace: " + dialogName);
 	session.sendTyping();
-	session.beginDialog('/wait/function', { function: func, time: time ? time : global.defaultTime, passthrough: args || {}});
+	session.replaceDialog('/wait/replaceDialog', { nextDialog: dialogName, time: time ? time : global.defaultTime, passthrough: args || {} });
 }
 global.HoldNext = function (session, args, time) {
 	session.sendTyping();
 	session.beginDialog('/wait/next', { time: time ? time : global.defaultTime, passthrough: args || {} });
+}
+global.HoldEnd = function (session, args, time) {
+	session.sendTyping();
+	global.Wait(session, function () { 
+		session.endDialog();
+	}, time);
+}
+function ToUpper(string) {
+    return string.charAt(0).toUpperCase() + string.slice(1);
 }

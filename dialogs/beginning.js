@@ -19,9 +19,7 @@ module.exports.init = function () {
             },
             function (session, args, next) {
                 if (args.response == 1) {
-                    session.send("We Dundee is taking names and information about Dundee so we can let the world find out what we do here.");
-                    session.userData.knowsWhatsUp = true;
-                    HoldDialog(session, '/beginning/siteDesign');
+                    session.beginDialog('/beginning/description');
                 } else {
                     HoldDialog(session, "/beginning/firstRefusal");
                 }
@@ -30,7 +28,21 @@ module.exports.init = function () {
             }
         ]
     ).triggerAction({ matches: /^INT/ }); 
-
+bot.dialog('/beginning/description',
+[
+    function (session, args, next) {
+        session.send("We Dundee exists to find out all the interesting things about the city from the people who live here and eventually make this knowledge available to the world.");
+        session.userData.knowsWhatsUp = true;   
+        global.HoldNext(session);
+    },
+    function (session, args, next) {
+        session.send("I have been given the job of asking the questions that others leave here, and taking down all the answers.");
+        HoldDialog(session, '/beginning/siteDesign');
+    },function (session, args, next) {
+        session.endDialog();
+    }
+]
+); 
     bot.dialog('/beginning/siteDesign',
         [
             function (session, args, next) {
@@ -137,7 +149,7 @@ module.exports.init = function () {
     bot.dialog('/beginning/doQuestions',
         [
             function (session, args, next) {
-                session.send("I'm going to ask you three random questions and if you answer them you can leave a question to ask others.");
+                session.send("I'm going to ask you three random questions and then you can ask a question for other people to answer.");
                 HoldNext(session);
             }, 
             function (session, args, next) {
