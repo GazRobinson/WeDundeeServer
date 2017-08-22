@@ -147,7 +147,8 @@ var intents = new builder.IntentDialog();
 global.address;
 
 //NLP
-var model = 'https://eastus2.api.cognitive.microsoft.com/luis/v2.0/apps/8fce766d-71b2-4dc6-9266-65a27c778841?subscription-key=3e3add150f3a4f9c870d810b653bfd30&timezoneOffset=0&verbose=true&q='
+//var model = 'https://eastus2.api.cognitive.microsoft.com/luis/v2.0/apps/8fce766d-71b2-4dc6-9266-65a27c778841?subscription-key=3e3add150f3a4f9c870d810b653bfd30&timezoneOffset=0&verbose=true&q='
+var model = 'https://westeurope.api.cognitive.microsoft.com/luis/v2.0/apps/64a255e8-f00e-4bdc-a775-ba4497d0ed10?subscription-key=2df22f9b688f49bd9f6a552651317bdf&verbose=true&timezoneOffset=0&q='
 var recognizer = new builder.LuisRecognizer(model);
 bot.recognizer(recognizer);
 bot.set('persistConversationData', true);
