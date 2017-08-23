@@ -231,7 +231,7 @@ module.exports.init = function () {
         [
             function (session, args, next) {
                 if (!session.userData.askedAQuestion) {
-                    prompts.beginMultiDialog(session, {text: "Ok before we go, I promised you could leave a question for other to answer. Would you like to do that?"});
+                    prompts.beginMultiDialog(session, {text: "Ok before we go, I promised you could leave a question for others to answer about Dundee. Would you like to do that?"});
                 } else {
                     session.endDialog();
                 }
@@ -280,6 +280,33 @@ module.exports.init = function () {
 }
 var qArray = [];
 
+
+
+global.SaveResponse = function(session, questionID, response ) {
+	var postsRef = responseRef.child(questionID + "/answers");
+
+	var newPostRef = postsRef.push();
+	newPostRef.set({username:session.userData.name||"Anonymous", answer:response, checked: false});
+}
+var responses;
+
+function LoadAllResponses() {
+
+    var responseRef = db.ref("server/saving-data/responses");
+    console.log("LOADING RESPONSES");
+    responseRef.on("value", function (snapshot) {
+        clearTimeout(global.qTime);
+        console.log("RESPONSES LOADED");
+        global.responsesLoaded = true;
+		responseRef.off("value");
+        responses = snapshot.val();
+        console.log(responses);
+    }, function (errorObject) {
+      console.log("The read failed: " + errorObject.code);
+      responseRef.off("value");
+    });
+}
+
 function LoadAllQs() {
     console.log("LOADING QUESTIONS");
     ref.on("value", function (snapshot) {
@@ -306,12 +333,28 @@ function LoadAllQs() {
                 qArray.push(ret);
             }    
         }
+        LoadAllResponses();
     }, function (errorObject) {
       console.log("The read failed: " + errorObject.code);
       ref.off("value");
     });
 }
+function ShowHumanResponse(rootName) {
+    console.log("RNAME: " + rootName);
 
+    var answers = responses[rootName].answers;
+  
+    var obj_keys = Object.keys(answers);
+    var ran_key = obj_keys[Math.floor(Math.random() * obj_keys.length)];
+    console.log("obj_keys: ");
+    console.log(obj_keys);
+    console.log("RanKey: ");
+    console.log(ran_key);
+    var selectedquestion = answers[ran_key];
+    console.log("Selected: ");
+    console.log(selectedquestion);
+    return selectedquestion;
+}
 function CreateDialog(rootKeyName, thisKeyName, qData) {
     if (qData.type == "textPrompt") {
         bot.dialog("/" + rootKeyName + "/" + thisKeyName,
@@ -369,6 +412,10 @@ function CreateDialog(rootKeyName, thisKeyName, qData) {
                         }
                     } 
 
+                    if (qData.logLocation && args.text) {
+                        console.log("Logging: " + args.text + " to " + qData.logLocation);
+                        global.SaveResponse(session, qData.logLocation, args.text);
+                    } 
                     if (qData.expectedResponse) {
                         expected = qData.expectedResponse;
                         if (args.response) {
@@ -392,15 +439,12 @@ function CreateDialog(rootKeyName, thisKeyName, qData) {
                                 }
                             }                            
                         }
-                    } 
-                    if (qData.logLocation && args.text) {
-                        console.log("Logging: " + args.text + " to " + qData.logLocation);
-                        global.SaveResponse(session, qData.logLocation, args.text);
-                    }
+                    }                    
                     if (qData.response != null) {
                         session.send(qData.response);
                     } else {
-                        session.send("Thanks");
+                        var resp = ShowHumanResponse(rootKeyName);
+                        session.send("Interesting! " + resp.username + " said '" + resp.answer + "'");
                     }
                     session.sendTyping();
                     setTimeout(function () { session.endDialog(); }, 5000);

@@ -33,7 +33,7 @@ bot.dialog('/beginning/description',
     function (session, args, next) {
         session.send("We Dundee exists to find out all the interesting things about the city from the people who live here and eventually make this knowledge available to the world.");
         session.userData.knowsWhatsUp = true;   
-        global.HoldNext(session);
+        global.HoldNext(session, {}, 10000);
     },
     function (session, args, next) {
         session.send("I have been given the job of asking the questions that others leave here, and taking down all the answers.");

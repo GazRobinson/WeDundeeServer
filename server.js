@@ -1,5 +1,9 @@
 const config = require('./config.js')
 require('./connectorSetup.js')();
+
+global.questionsLoaded = false;
+global.responsesLoaded = false;
+
 require('dotenv').config();
 var fs = require('fs');
 var mime = require('mime');
@@ -127,14 +131,6 @@ function AnswerQuestion(id, currentAnswers, newAnswers) {
 	ref.update(obb
 	);
 }
-
-global.SaveResponse = function(session, questionID, response ) {
-	var postsRef = responseRef.child(questionID + "/answers");
-
-	var newPostRef = postsRef.push();
-	newPostRef.set({username:session.userData.name||"Anonymous", answer:response});
-}
-
 
 //WORDPRESS
 var wpClient = wordpress.createClient({
@@ -266,7 +262,6 @@ var timeout;
 bot.dialog('/', 	
 	[
 		function (session, args, next) {	
-			global.SaveResponse(session, "pie/fun", "butts");
 			global.IdleStop(session);
 			if (!session.userData.name) {
 				if (!args || !args.greeting) {
@@ -383,11 +378,7 @@ bot.dialog('/confirmIdentity', [
 				session.send("Lovely. It's good to have you back!");				
 			}	
 			session.conversationData.hello = true;
-			//global.startTimer();
-			console.log(session.dialogStack());
-			//session.endDialog();
-			if (session.userData.usedQuestions.length > 2) {
-				console.log(session.dialogStack());
+			if (session.userData.usedQuestions && session.userData.usedQuestions.length > 2) {
 				HoldDialog(session, '/picture/picture');
 			} else {
 				HoldDialog(session, '/beginning/intro');
