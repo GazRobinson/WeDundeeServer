@@ -45,7 +45,7 @@ module.exports.init = function () {
                 if (args.response == 1) {
                     session.beginDialog('/picture/onComputer');
                 } else {
-                    session.send("Thats fine, you can come back and add it later when you do.");
+                    session.send("That's fine, you can come back and add it later when you do.");
                     global.Wait(session, function () { console.log("END");session.endDialog(); }, 4000); 
                 }
             },function (session, args, next) {

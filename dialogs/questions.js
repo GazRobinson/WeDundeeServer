@@ -241,20 +241,21 @@ module.exports.init = function () {
                     if (args.response == 1) {
                         session.beginDialog('/askQuestion');
                     } else {
+                        //TODO: Crashes here
                         HoldNext(session, { bad: true }, 3000);
                     }
                 } else {
-                    global.HoldDialog('/quickAskQuestion', {text: args.text});
+                    global.HoldDialog(session, '/quickAskQuestion', {text: args.text});
                 }    
             },
             function (session, args, next) {
-                global.HoldDialog('/picture/intro', {text: args.text});
+                global.HoldDialog(session, '/picture/intro', {text: args.text});
             },
             function (session, args, next) {
                 session.endDialog();
             }
         ]
-    );
+    ).triggerAction({ matches: /^ASSK/ });  
 
     bot.dialog('/questions/another',
         [
