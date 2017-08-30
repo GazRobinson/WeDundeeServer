@@ -214,7 +214,7 @@ bot.on('conversationUpdate', function (message) {
 					.text("Hello " + session.userData.name + ", it's so nice to see your face again."));
 			} else {
 				var summary = dialogs.weather.GetCurrentWeather().summary.toLowerCase();
-				session.beginDialog('/intro/start');
+				//session.beginDialog('/intro/start');
 			}
 		});
 	} else {
