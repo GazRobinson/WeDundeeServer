@@ -175,10 +175,10 @@ bot.on('incoming', function (message) {
 	if (message.attachments.length > 0) {
 		console.log("Got an attachment");
 		download(message.attachments[0].contentUrl,
-			'temp'+session.userData.name+'.png',
+			'temp'+message.address.conversation.id+'.png',
 			function () {
 				console.log('done');
-				UploadFile('./temp' + session.userData.name + '.png', "subfolder/images/" + session.userData.name + ".png"
+				UploadFile('./temp' + message.address.conversation.id + '.png', "subfolder/images/" + message.address.conversation.id + ".png"
 					
 				)
 			}

@@ -440,13 +440,22 @@ function CreateDialog(rootKeyName, thisKeyName, qData) {
                                 }
                             }                            
                         }
-                    }                    
-                    if (qData.response != null) {
-                        session.send(qData.response);
+                    }             
+                    if (Math.random() > 0.7) {
+                        if (qData.response != null) {
+                            session.send(qData.response);
+                        } else {
+                            var resp = ShowHumanResponse(rootKeyName);
+                            session.send("Interesting! " + resp.username + " said '" + resp.answer + "'");
+                        }
                     } else {
                         var resp = ShowHumanResponse(rootKeyName);
-                        session.send("Interesting! " + resp.username + " said '" + resp.answer + "'");
-                    }
+                        session.send(["Interesting! " + resp.username + " said '" + resp.answer + "'",
+                            resp.username + " said '" + resp.answer + "'",
+                            "Good to know! " + resp.username + " said '" + resp.answer + "'",
+                            resp.username + " said '" + resp.answer + "'"
+                        ]);                        
+                    }    
                     session.sendTyping();
                     setTimeout(function () { session.endDialog(); }, 5000);
                     return;
