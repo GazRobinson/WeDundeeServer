@@ -451,9 +451,10 @@ function CreateDialog(rootKeyName, thisKeyName, qData) {
                     } else {
                         var resp = ShowHumanResponse(rootKeyName);
                         session.send(["Interesting! " + resp.username + " said '" + resp.answer + "'",
-                            resp.username + " said '" + resp.answer + "'",
+                            "Thanks!" + resp.username + " said '" + resp.answer + "'",
                             "Good to know! " + resp.username + " said '" + resp.answer + "'",
-                            resp.username + " said '" + resp.answer + "'"
+                            "Thanks for the answer! " + resp.username + " said '" + resp.answer + "'",
+                            "Thank you!" + resp.username + " said '" + resp.answer + "'"
                         ]);                        
                     }    
                     session.sendTyping();
@@ -487,8 +488,10 @@ function CreateDialog(rootKeyName, thisKeyName, qData) {
                     session.send(qData.text);
                     if (!qData.next) {
                         setTimeout(function () { session.endDialog(); }, 7000);
+                        HoldNext(sesison);
                     } else {
-                        setTimeout(function () { session.beginDialog(qData.next); }, 7000);                        
+                        HoldDialog(session, qData.next);
+                     //   setTimeout(function () { session.beginDialog(qData.next); }, 7000);                        
                     }    
                 }, function (session, args, next) {
                     session.endDialog();                    

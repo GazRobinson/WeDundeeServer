@@ -564,7 +564,7 @@ bot.dialog('/profile', [
 	},
 	function (session, args, next) {
 		session.send("Anyway...");
-		Wait(session, next, 5000);
+		HoldNext(session, {}, 5000);
 	},
 	function (session, args) {
 		session.beginDialog('/askName');
