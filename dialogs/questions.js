@@ -305,7 +305,10 @@ function LoadAllResponses() {
     }, function (errorObject) {
       console.log("The read failed: " + errorObject.code);
       responseRef.off("value");
-    });
+        });
+    global.responseTime = setTimeout(function() {
+        LoadAllResponses();
+    }, 300000);
 }
 
 function LoadAllQs() {
