@@ -423,7 +423,7 @@ function CreateDialog(rootKeyName, thisKeyName, qData) {
                             session.dialogData.solved = false;
                             for (i = 0; i < expected.length; i++) {
                                 for (j = 0; j < expected[i].answer.length; j++) {
-                                    var reg = args.text.match(expected[i].answer[j]);
+                                    var reg = args.text.match(new RegExp(expected[i].answer[j], 'i'));
                                     if (reg && reg.length > 0) {
                                         if (expected[i].responseDialog) {
                                             global.WaitStop(session);
