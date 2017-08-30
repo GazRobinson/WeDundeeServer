@@ -81,6 +81,25 @@ module.exports = function () {
     } }
     );
     
+    //AskName
+    bot.dialog('/intent/askName', [
+        function (session, args, next)
+        {
+            session.send("I am not allowed to give you that information. It's classified.");
+            global.HoldNext(session);
+        },
+        function (session, args, next)
+        {
+            session.endDialog();
+        }
+        ]
+        ).triggerAction({
+            matches: 'intent.inquireAboutBot' ,
+            onSelectAction: (session, args, next) => {
+            session.beginDialog('/intent/askName');
+        } }
+    );
+
     //ShowMe
     bot.dialog('/showThought',
         [
@@ -309,7 +328,7 @@ bot.dialog('/pictest',
             }
         });  
     
-     bot.dialog('/botInquire',
+/*     bot.dialog('/botInquire',
     [
         function (session, args) {
             session.send("I am not allowed to answer questions about myself, it’s company policy.");
@@ -322,7 +341,7 @@ bot.dialog('/pictest',
         onSelectAction: (session, args, next) => {    
         session.beginDialog('/botInquire');
              }
-         });  
+         }); */ 
     bot.dialog('/population',
         [
             function (session, args, next) {
