@@ -161,7 +161,7 @@ module.exports = function () {
         var postsRef = photoRef;
     
         var newPostRef = postsRef.push();
-        newPostRef.set({id:session.message.conversation.id, username:session.userData.name||"Anonymous", description:picDescription, checked: false});
+        newPostRef.set({id:session.message.address.conversation.id, username:session.userData.name||"Anonymous", description:picDescription, checked: false});
     }
 
 bot.dialog('/pictest',
