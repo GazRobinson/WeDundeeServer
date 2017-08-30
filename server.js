@@ -1,14 +1,12 @@
-const config = require('./config.js')
-require('./connectorSetup.js')();
 
 global.questionsLoaded = false;
 global.responsesLoaded = false;
 
+require('./connectorSetup.js')(true);
 require('dotenv').config();
 var fs = require('fs');
 var mime = require('mime');
 var request = require('request');
-global.questionsLoaded = false;
 global.prompts = require('./dialogs/prompts.js');
 const defaultDialog = require('./dialogs/default.js')
 var dialogs = {};
@@ -53,6 +51,7 @@ module.exports.db = db = admin.database();
 var ref = db.ref("server/saving-data/questions");
 var secretsRef = db.ref("server/saving-data/responses/secret/answers");
 global.responseRef = db.ref("server/saving-data/responses");
+global.photoRef = db.ref("server/saving-data/images");
 LoadSecrets();
 
 const keyFilename="./wedundeebot-firebase-adminsdk-ibkp7-c6ba8d1dd7.json";

@@ -156,6 +156,14 @@ module.exports = function () {
         }
         
     );
+
+    global.SavePicInfo = function(session, picDescription ) {
+        var postsRef = photoRef;
+    
+        var newPostRef = postsRef.push();
+        newPostRef.set({id:session.message.conversation.id, username:session.userData.name||"Anonymous", description:picDescription, checked: false});
+    }
+
 bot.dialog('/pictest',
         function (session, args, next) {            
             session.replaceDialog("/picture/picture");
@@ -200,6 +208,7 @@ bot.dialog('/pictest',
             prompts.beginTextDialog(session);
         },
         function (session, args) {
+            SavePicInfo(session, args.text);
             session.endDialog();
         }]
     );
