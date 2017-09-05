@@ -3,7 +3,8 @@ Basic pattern for exposing a custom prompt. The create() function should be
 called once at startup and then beginDialog() can be called everytime you
 wish to invoke the prompt.
 -----------------------------------------------------------------------------*/
-
+exports.positiveResponses = [/\byes\b/i, /\baye\b/i, /\byup\b/i, /\byeah\b/i, /\byeh\b/i, /\bok\b/i, /\bokay\b/i, /\bf'sho\b/i, /\bcorrect\b/i, /\babsolutely\b/i];
+exports.negativeResponses = [/\bno\b/i, /\bnope\b/i, /\bnah\b/i, /\bnaw\b/i, /\bnein\b/i, /\bnever\b/i, /\bincorrect\b/i];
 exports.init = function (bot) {
     // ROOT
     bot.dialog('textPrompt2', [
@@ -66,7 +67,14 @@ exports.createConfirmDialog = function (bot, recog) {
         .matches('positiveResponse', function (session, args) {
             session.endDialogWithResult({ response: 1 , type: "confirm"});
         })
+        .matchesAny([/\by\b/i,/\byes\b/i, /\baye\b/i, /\byup\b/i, /\byeah\b/i, /\byeh\b/i, /\bok\b/i, /\bokay\b/i, /\bf'sho\b/i, /\bcorrect\b/i, /\babsolutely\b/i],function (session, args) {
+            console.log("Positive REGEX match (confirm dialog)");
+            session.endDialogWithResult({ response: 1 , type: "confirm"});
+        })
         .matches('negativeResponse', function (session, args) {
+            session.endDialogWithResult({ response: 0 , type: "confirm"});
+        })
+        .matchesAny([/\bn\b/i,/\bno\b/i, /\bnope\b/i, /\bnah\b/i, /\bnaw\b/i, /\bnein\b/i, /\bnever\b/i, /\bincorrect\b/i], function (session, args) {
             session.endDialogWithResult({ response: 0 , type: "confirm"});
         })
         .matches('intent.dontKnow', function (session, args) {
@@ -181,13 +189,20 @@ exports.createMultiDialog = function (bot, recog) {
                 }
             }
         })
+        .matchesAny([/\byes\b/i, /\baye\b/i, /\byup\b/i, /\byeah\b/i, /\byeh\b/i, /\bok\b/i, /\bokay\b/i, /\bf'sho\b/i, /\bcorrect\b/i, /\babsolutely\b/i],function (session, args) {
+            console.log("Positive REGEX match");
+                session.endDialogWithResult({ response: 1, type: "confirm", text: session.message.text });
+        })
         .matches('positiveResponse', function (session, args) {
-            console.log(args);
             if (args.score > session.dialogData.scoreThreshold){
                 session.endDialogWithResult({ response: 1, type: "confirm", text: session.message.text });
             } else{
                 session.endDialogWithResult({ response: -1, text: session.message.text });
             }
+        })
+        .matchesAny([/\bno\b/i, /\bnope\b/i, /\bnah\b/i, /\bnaw\b/i, /\bnein\b/i, /\bnever\b/i, /\bincorrect\b/i], function (session, args) {
+            console.log("Negative REGEX match");
+                session.endDialogWithResult({ response: 0, type: "confirm", text: session.message.text });
         })
         .matches('negativeResponse', function (session, args) {
             if (args.score > session.dialogData.scoreThreshold) {

@@ -41,7 +41,7 @@ module.exports = function () {
     bot.dialog('/gratitude', [
         function (session, args, next) {
             console.log("DOH DOH DOH DOH");
-            session.send("You're welcome!");
+            session.send(["You're welcome!", "Don’t mention it - it’s my job to please you", "Don't mention it!", "You're welcome."]);
             global.HoldNext(session);
         },
         function (session, args, next) {
@@ -155,7 +155,7 @@ module.exports = function () {
 
     bot.dialog('/blankResponse',
         function (session, args) {
-            console.log("Blank Response");
+            console.log("Blank Response: " + session.message.text);
             session.send({
                 type: 'gaz',
                 text: "unlock"
@@ -194,7 +194,20 @@ bot.dialog('/pictest',
     [
         function (session, args, next) {
             var msg = session.message;
+            console.log(msg.text);
+
+            var reg = session.message.text.match(new RegExp('\\bcancel\\b', 'i'));
+            if (reg && reg.length > 0) {
+                console.log("Cancelling");
+                session.send({
+                    type: 'pic/cancel',
+                    text: "cancelling..."
+                });
+                session.endDialog();
+            }
             if (msg.attachments && msg.attachments.length > 0) {
+
+                console.log("cool");
                 // Echo back attachment
                 var attachment = msg.attachments[0];
 
@@ -202,19 +215,38 @@ bot.dialog('/pictest',
                 HoldNext(session);
             } else {
                 // Echo back users text
-                session.send("Please select a file to upload!");
+                session.send("Please select a file to upload, or type 'cancel' if you've changed your mind.");
             }
         },
         function (session, args) {
-            prompts.beginConfirmDialog(session, {questionText: "Would you like to add a description to your photo?", skip:false});
+
+            console.log("HERE NOW: " + session.message.text);
+            var reg = session.message.text.match(new RegExp('\\bcancel\\b', 'i'));
+            console.log(reg);
+            if (reg && reg.length > 0) {
+                console.log("Cancelling");
+                session.send({
+                    type: 'pic/cancel',
+                    text: "cancelling..."
+                });
+                session.endDialog();
+            } else {
+                prompts.beginConfirmDialog(session, { questionText: "Would you like to add a description to your photo?", skip: false });
+            }  
+              
         }, 
-        function (session, args, next) {            
-            if (args.response == 1) {                    
-                session.beginDialog('/picture/addDescription');
-            } else if (args.response == 0 || args.response == 2) {
-                session.send("Ok, I guess the picture does all the talking.");
-                HoldNext(session);
-            } 
+        function (session, args, next) {        
+            if (args.type && args.type == "confirm") {
+                if (args.response == 1) {
+                    session.beginDialog('/picture/addDescription');
+                } else {
+                    session.send("Ok, I guess the picture does all the talking.");
+                    HoldNext(session);
+                }
+            } else {
+                SavePicInfo(session, args.text);
+                session.endDialog();
+            }  
         },
         function (session, args) {
             session.endDialog();
@@ -231,13 +263,27 @@ bot.dialog('/pictest',
             session.endDialog();
         }]
     );
+    bot.dialog('/positiveRegexResponse',	
+    function (session, args) {
+        session.endDialogWithResult({ response: 1 , type: "confirm"});
+    }
+).triggerAction({ matches: global.prompts.positiveResponses,
+    onSelectAction: (session, args, next) => {  
+            console.log("REGEX POSITIVE");
+            if (session.dialogStack().length > 0) {                        
+                session.beginDialog('/positiveResponse');
+            } else {                 
+                session.beginDialog('/');
+            }               
+        }
+    });
     bot.dialog('/positiveResponse',	
         function (session, args) {
-            console.log("EXTERNAL POSITIVE");
             session.endDialogWithResult({ response: 1 , type: "confirm"});
 		}
     ).triggerAction({ matches: 'positiveResponse',
         onSelectAction: (session, args, next) => {  
+            console.log("EXTERNAL POSITIVE: " + args.intent.score );
             console.log(session.dialogStack());
 
             console.log(session.dialogStack().length);
@@ -250,19 +296,34 @@ bot.dialog('/pictest',
                 } else {
                     if (session.dialogStack().length > 0) {                        
                         session.beginDialog('/blankResponse');
+                       
                     } else {
                         session.beginDialog('/');
                     }    
                 }   
             }
         });
+    bot.dialog('/negativeRegexResponse',	
+        function (session, args) {
+            session.endDialogWithResult({ response: 0 , type: "confirm"});
+		}
+    ).triggerAction({ matches: global.prompts.positiveResponses,
+        onSelectAction: (session, args, next) => {  
+                console.log("REGEX NEGATIVE");
+                if (session.dialogStack().length > 0) {                        
+                    session.beginDialog('/negativeResponse');
+                } else {                 
+                    session.beginDialog('/');
+                }     
+            }
+        });
     bot.dialog('/negativeResponse',	
         function (session, args) {
-            console.log("EXTERNAL NEGATIVE");
             session.endDialogWithResult({ response: 0 , type: "confirm"});
 		}
     ).triggerAction({ matches: 'negativeResponse',
-        onSelectAction: (session, args, next) => {  
+        onSelectAction: (session, args, next) => { 
+            console.log("EXTERNAL NEGATIVE: " + args.intent.score ); 
             if (args.intent.score > 0.7) {
                     if (session.dialogStack().length > 0) {                        
                         session.beginDialog('/negativeResponse');
@@ -393,8 +454,20 @@ bot.dialog('/pictest',
     } }
     );
      
+
+    bot.dialog('/log', function (session) {
+        session.beginDialog('/log');
+    }).triggerAction({
+        matches: /^LOG/,
+        onSelectAction: (session, args, next) => {
+            console.log(chatlogs[session.message.address.user.id].name);
+
+            console.log("-------------");
+            console.log(chatlogs[session.message.address.user.id].log);
+        }});  
+
     bot.dialog('sec', function (session) {
-        session.beginDialog('/uploadTest');
+        session.beginDialog('/secret/root');
     }).triggerAction({ matches: /^FAME/ });  
 
     // RESET

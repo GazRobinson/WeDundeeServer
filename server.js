@@ -83,7 +83,8 @@ global.UploadFile = function (filePath, uploadTo, callback) {
 }
 
 function createPublicFileURL(storageName) {
-    return `http://storage.googleapis.com/${bucketName}/${encodeURIComponent(storageName)}`;
+	return `http://storage.googleapis.com/${bucketName}/${encodeURIComponent(storageName)}`;
+	//http://storage.googleapis.com/wedundeebot/${encodeURIComponent(storageName)}
 }
 
 dialogs.questions = require('./dialogs/questions.js');
@@ -248,6 +249,48 @@ bot.on('conversationUpdate', function (message) {
 	}
 });
 
+//Middleware
+bot.use({
+	botbuilder: function (session, next) {
+		logIncomingMessage(session, next);
+	},
+	send: function (event, next) {		
+		logOutgoingMessage(event, next);
+	}
+});
+
+logIncomingMessage = function (session, next) {
+	if (!chatlogs[session.message.address.user.id]) {
+		chatlogs[session.message.address.user.id] = {name:"Default", log:""};
+	}
+	if (session.message.type == 'message' && session.message.text.length>0) {
+		chatlogs[session.message.address.user.id].name = session.userData.name;
+		chatlogs[session.message.address.user.id].log += (session.userData.name + ': ' + session.message.text + '\n');
+	}	
+	next();
+}
+
+logOutgoingMessage = function (event, next) {
+	if (event.type == 'message') {
+		chatlogs[event.address.user.id].log += ('BOT: ' + event.text + '\n');
+	}	
+	next();
+}
+	
+global.saveLog = function (id) {
+	fs.writeFile("./tmp/" + id, chatlogs[id].name + '\n\n' + chatlogs[id].log, function(err) {
+		if (err) {
+			return console.log(err);
+		}
+		else {
+			console.log("The file was saved!");
+			UploadFile("./tmp/" + id, "subfolder/logs/" + id, function(){
+				fs.unlink("./tmp/" + id, function () { console.log("Cleanup successful");});});
+		}	
+	}); 
+}
+
+
 bot.dialog('/inactive', [
 	function (session, args) {
 		bot.beginDialog(global.address, args);
@@ -338,6 +381,7 @@ function check(val) {
 
 var doneIntro = false;
 
+global.chatlogs = {};
 global.timeDict = {};
 global.globalTimeDict = {};
 
@@ -444,7 +488,18 @@ bot.dialog('/intro/confirmName',
 		},
 		function (session, args, next) {
 			if (args.response == 1) {
-				session.userData.name = ToUpper(session.userData.name.split(' ')[1]);
+				session.userData.name = ToUpper( session.userData.name.split(' ')[1]);
+				session.endDialog();
+			} else {
+				prompts.beginTextDialog(session, { text: 'Well, what should I call you?' });
+			}
+		},
+		function (session, args, next) {
+			session.userData.name = args.text;
+			prompts.beginConfirmDialog(session, {questionText: "So, you're " + args.text + "?"});
+		},
+		function (session, args, next) {
+			if (args.response == 1) {
 				session.endDialog();
 			} else {
 				prompts.beginConfirmDialog(session, {questionText: "Ok then. I am just going to call you 'Human'... You are human aren't you?"});
@@ -915,6 +970,7 @@ global.ResetData = function (session) {
 		session.userData.askedAQuestion = false;
         session.userData.questionCount = 0;
 		session.userData.completed = false;
+		session.userData.finishedQuestions = false;
 }
 function Init(session) {
 	console.log("init");
@@ -961,9 +1017,9 @@ bot.dialog('/wait/dialog',[
 			global.Wait(session, function () { 
 			console.log("Now do next");next(args); }, session.dialogData.waitArgs.time);
 		} else {
-
+/*
 			console.log("WAIT!!");
-			session.send("WAIT");
+			session.send("WAIT");*/
 		}	
 	},
 	function (session, args, next) {
@@ -985,9 +1041,9 @@ bot.dialog('/wait/replaceDialog',[
 			global.Wait(session, function () { 
 				next(args);
 			}, session.dialogData.waitArgs.time);
-		} else {
+		} else {/*
 			console.log("WAIT!!");
-			session.send("WAIT");
+			session.send("WAIT");*/
 		}	
 	},
 	function (session, args, next) {
@@ -1010,10 +1066,9 @@ bot.dialog('/wait/next', [
 			global.Wait(session, function () {
 				next(args);
 			}, session.dialogData.waitArgs.time);
-		} else {
-
+		} else {/*
 			console.log("WAIT!!");
-			session.send("WAIT");
+			session.send("WAIT");*/
 		}
 	},
 	function (session, args, next) {
@@ -1035,9 +1090,9 @@ bot.dialog('/wait/end', [
 			global.Wait(session, function () {
 				next(args);
 			}, session.dialogData.waitArgs.time);
-		} else {
+		} else {/*
 			console.log("WAIT!!");
-			session.send("WAIT");
+			session.send("WAIT");*/
 		}
 	},
 	function (session, args, next) {

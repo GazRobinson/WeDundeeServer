@@ -30,6 +30,7 @@ module.exports.init = function () {
         },
         function (session, args, next) {
             session.userData.completed = true;
+            saveLog(session.message.address.user.id);
             session.send("Thank you and goodbye!");
             session.endDialog();
         }

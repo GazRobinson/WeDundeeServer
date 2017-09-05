@@ -34,7 +34,7 @@ module.exports.init = function () {
                 session.beginDialog("/media/requestPicture");
             },
             function (session, args, next) {
-                global.Wait(session, next, 6000); 
+                global.HoldNext(session);
             },
             function (session, args) {        
                 global.address = session.message.address;

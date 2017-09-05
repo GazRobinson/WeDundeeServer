@@ -140,7 +140,11 @@ module.exports.init = function () {
                 session.endDialog();                    
             }
         ]
-    ).triggerAction({ matches: /^qq/ });  
+    ).triggerAction({ matches: /^qq/,
+        onSelectAction: (session, args, next) => {    
+            session.userData.finishedQuestions = false;
+        session.beginDialog('/questions/intro');
+            } });  
     
     bot.dialog('/questions/single',
         [
@@ -301,7 +305,7 @@ function LoadAllResponses() {
         global.responsesLoaded = true;
 		responseRef.off("value");
         responses = snapshot.val();
-        console.log(responses);
+        //console.log(responses);
     }, function (errorObject) {
       console.log("The read failed: " + errorObject.code);
       responseRef.off("value");
@@ -382,8 +386,13 @@ function CreateDialog(rootKeyName, thisKeyName, qData) {
                             }    
                         } else if (args.response == 0 || args.response == 2) {
                             console.log("neg");
-                            session.send(qData.negativeMsg||"That's okay! We'll move on for now!");
-                            session.endDialog();
+                            if (qData.negative) {
+                                session.beginDialog("/" + rootKeyName + "/" + qData.negative);
+                                
+                            } else {
+                                session.send(qData.negativeMsg || "That's okay! We'll move on for now!");
+                                session.endDialog();
+                            }    
                             return;
                         } 
                     }
@@ -398,7 +407,7 @@ function CreateDialog(rootKeyName, thisKeyName, qData) {
                             session.dialogData.solved = false;
                             for (i = 0; i < expected.length; i++) {
                                 for (j = 0; j < expected[i].answer.length; j++) {
-                                    var reg = temp.match(expected[i].answer[j]);
+                                    var reg = temp.match(new RegExp('\\b' + expected[i].answer[j] + '\\b', 'i'));
                                     if (reg && reg.length > 0) {
                                             session.dialogData.solved = true;
                                             session.send(expected[i].response);
@@ -409,7 +418,6 @@ function CreateDialog(rootKeyName, thisKeyName, qData) {
                                                // session.replaceDialog("/" + rootKeyName + "/" + thisKeyName, { text: qData.text });
                                             }, 6000);
                                             return;
-                                         
                                     }
                                 }
                             }                            
@@ -420,13 +428,20 @@ function CreateDialog(rootKeyName, thisKeyName, qData) {
                         console.log("Logging: " + args.text + " to " + qData.logLocation);
                         global.SaveResponse(session, qData.logLocation, args.text);
                     } 
+                    //Expected
                     if (qData.expectedResponse) {
                         expected = qData.expectedResponse;
                         if (args.response) {
                             session.dialogData.solved = false;
                             for (i = 0; i < expected.length; i++) {
                                 for (j = 0; j < expected[i].answer.length; j++) {
-                                    var reg = args.text.match(new RegExp(expected[i].answer[j], 'i'));
+                                    var exp = '\\b' + expected[i].answer[j] + '\\b';
+                                    console.log("REGEX: " + exp);
+
+                                    console.log("txt: " + args.text);
+                                    var reg = args.text.match(new RegExp(exp, 'i'));
+                                    
+                                    console.log(reg);
                                     if (reg && reg.length > 0) {
                                         if (expected[i].responseDialog) {
                                             global.WaitStop(session);
@@ -454,10 +469,10 @@ function CreateDialog(rootKeyName, thisKeyName, qData) {
                     } else {
                         var resp = ShowHumanResponse(rootKeyName);
                         session.send(["Interesting! " + resp.username + " said '" + resp.answer + "'",
-                            "Thanks!" + resp.username + " said '" + resp.answer + "'",
+                            "Thanks! " + resp.username + " said '" + resp.answer + "'",
                             "Good to know! " + resp.username + " said '" + resp.answer + "'",
                             "Thanks for the answer! " + resp.username + " said '" + resp.answer + "'",
-                            "Thank you!" + resp.username + " said '" + resp.answer + "'"
+                            "Thank you! " + resp.username + " said '" + resp.answer + "'"
                         ]);                        
                     }    
                     session.sendTyping();
@@ -490,8 +505,7 @@ function CreateDialog(rootKeyName, thisKeyName, qData) {
                 function (session, args) {
                     session.send(qData.text);
                     if (!qData.next) {
-                        setTimeout(function () { session.endDialog(); }, 7000);
-                        HoldNext(sesison);
+                        HoldNext(session);
                     } else {
                         HoldDialog(session, qData.next);
                      //   setTimeout(function () { session.beginDialog(qData.next); }, 7000);                        
