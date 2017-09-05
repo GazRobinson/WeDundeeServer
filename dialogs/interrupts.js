@@ -196,7 +196,7 @@ bot.dialog('/pictest',
             var msg = session.message;
             console.log(msg.text);
 
-            var reg = session.message.text.match(new RegExp('\\bcancel\\b', 'i'));
+            var reg = session.message.text.match(new RegExp('cancel', 'i'));
             if (reg && reg.length > 0) {
                 console.log("Cancelling");
                 session.send({
@@ -221,7 +221,7 @@ bot.dialog('/pictest',
         function (session, args) {
 
             console.log("HERE NOW: " + session.message.text);
-            var reg = session.message.text.match(new RegExp('\\bcancel\\b', 'i'));
+            var reg = session.message.text.match(new RegExp('cancel', 'i'));
             console.log(reg);
             if (reg && reg.length > 0) {
                 console.log("Cancelling");
