@@ -93,6 +93,20 @@ global.UploadFile = function (filePath, uploadTo, callback) {
 	} );
 }
 
+global.saveLog = function (id) {
+	fs.writeFile("./temp/" + id + ".txt", chatlogs[id].name + '\n\n' + chatlogs[id].log, function(err) {
+		if (err) {
+			return console.log(err);
+		}
+		else {
+			console.log("The file was saved!");
+			UploadFile("./temp/" + id, "subfolder/logs/" + id, function(){
+				fs.unlink("./temp/" + id, function () { console.log("Cleanup successful");});});
+		}	
+	}); 
+	delete chatlogs[id];
+}
+
 function createPublicFileURL(storageName) {
 	return `http://storage.googleapis.com/${bucketName}/${encodeURIComponent(storageName)}`;
 	//http://storage.googleapis.com/wedundeebot/${encodeURIComponent(storageName)}
@@ -289,21 +303,6 @@ logOutgoingMessage = function (event, next) {
 	}	
 	next();
 }
-	
-global.saveLog = function (id) {
-	fs.writeFile("./tmp/" + id, chatlogs[id].name + '\n\n' + chatlogs[id].log, function(err) {
-		if (err) {
-			return console.log(err);
-		}
-		else {
-			console.log("The file was saved!");
-			UploadFile("./tmp/" + id, "subfolder/logs/" + id, function(){
-				fs.unlink("./tmp/" + id, function () { console.log("Cleanup successful");});});
-		}	
-	}); 
-	delete chatlogs[id];
-}
-
 
 bot.dialog('/inactive', [
 	function (session, args) {
