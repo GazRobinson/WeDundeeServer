@@ -52,7 +52,11 @@ var ref = db.ref("server/saving-data/questions");
 var secretsRef = db.ref("server/saving-data/responses/secret/answers");
 global.responseRef = db.ref("server/saving-data/responses");
 global.photoRef = db.ref("server/saving-data/images");
+var tempDir = './temp';
 
+if (!fs.existsSync(tempDir)){
+    fs.mkdirSync(tempDir);
+}
 LoadSecrets();
 LoadData();
 var chatCount = 7777;
@@ -94,15 +98,16 @@ global.UploadFile = function (filePath, uploadTo, callback) {
 }
 
 global.saveLog = function (id) {
-var path = "./test/" + id + ".txt"
+var path = "./temp/" + id + ".txt"
 	fs.open(path, 'wx', (err, fd) => {
 		if (err) {
+			consolo
 		  if (err.code === 'EEXIST') {
 			console.error('myfile already exists');
 			return;
 		  }
 	  
-		  throw err;
+		 // throw err;
 		}
 	  
 		console.log('succeeded');
@@ -220,9 +225,7 @@ bot.on('incoming', function (message) {
 			'temp'+message.address.conversation.id+'.png',
 			function () {
 				console.log('done');
-				UploadFile('./temp' + message.address.conversation.id + '.png', "subfolder/images/" + message.address.conversation.id + ".png"
-					
-				)
+				UploadFile('./temp' + message.address.conversation.id + '.png', "subfolder/images/" + message.address.conversation.id + ".png")
 			}
 		);
 	}
