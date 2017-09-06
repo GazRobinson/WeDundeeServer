@@ -168,7 +168,7 @@ module.exports = function () {
         function (session, args, next) {
             console.log("Upload test");
             var d = new Date();
-            session.userData.uploadID = session.message.address.user.id + '_' + d.getTime();
+            session.userData.uploadID = session.userData.name + '_' + d.getTime();
             session.send({
                 type: 'uploadPrompt',
                 text: "Do"
@@ -241,6 +241,7 @@ bot.dialog('/pictest',
                     session.beginDialog('/picture/addDescription');
                 } else {
                     session.send("Ok, I guess the picture does all the talking.");
+                    SavePicInfo(session, "");
                     HoldNext(session);
                 }
             } else {
@@ -468,7 +469,7 @@ bot.dialog('/pictest',
         }});  
 
     bot.dialog('sec', function (session) {
-        session.beginDialog('/showPicture');
+        session.beginDialog('/showPictureTemp');
     }).triggerAction({ matches: /^FAME/ });  
 
     // RESET

@@ -489,15 +489,17 @@ function CreateDialog(rootKeyName, thisKeyName, qData) {
                                 session.beginDialog("/" + rootKeyName + "/" + qData.negative);
                                 
                             } else {
-                                session.send(qData.negativeMsg || "That's okay! We'll move on for now!");
-                                session.endDialog();
+                                session.send(emojiCheck(qData.negativeMsg) || "That's okay! We'll move on for now!");
+                                global.Wait(session, function () { 
+                                    session.endDialog();                                    
+                                }, 6000);
                             }    
                             return dialogName;
                         } 
                     }
                     //IF we got a proper response:
                     //Log the response
-                    
+                    //Invalid
                     var temp = args.text.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g,"")
                     var expected;
                     if (qData.invalidResponse) {
@@ -509,7 +511,7 @@ function CreateDialog(rootKeyName, thisKeyName, qData) {
                                     var reg = temp.match(new RegExp('\\b' + expected[i].answer[j] + '\\b', 'i'));
                                     if (reg && reg.length > 0) {
                                             session.dialogData.solved = true;
-                                            session.send(expected[i].response);
+                                            session.send(emojiCheck(expected[i].response));
 	                                        session.sendTyping();
                                             global.Wait(session, function () { 
                                                 session.endDialog();
@@ -551,7 +553,7 @@ function CreateDialog(rootKeyName, thisKeyName, qData) {
                                             return dialogName;                                            
                                         } else {
                                             session.dialogData.solved = true;
-                                            session.send(expected[i].response);
+                                            session.send( emojiCheck(expected[i].response));
 	                                        session.sendTyping();
                                             setTimeout(function () { session.endDialog(); }, 6000);
                                             return dialogName;                                            
@@ -589,7 +591,7 @@ function CreateDialog(rootKeyName, thisKeyName, qData) {
         bot.dialog(dialogName,
             [
                 function (session, args) {
-                    session.send(qData.text);
+                    session.send(emojiCheck(qData.text));
                     if (!qData.next) {
                         HoldNext(session);
                     } else {
@@ -616,4 +618,12 @@ function CreateDialog(rootKeyName, thisKeyName, qData) {
         ) 
     }  
     return dialogName;
+}
+
+function emojiCheck(str) {
+    str = str.replace(':)', emoji.smile);
+    str = str.replace(';)', emoji.wink);
+    str = str.replace(':(', emoji.frown);
+    str = str.replace(':D', emoji.laugh);
+    return str;
 }
