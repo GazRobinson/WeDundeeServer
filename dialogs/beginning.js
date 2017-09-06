@@ -153,10 +153,6 @@ bot.dialog('/beginning/description',
                 HoldNext(session);
             }, 
             function (session, args, next) {
-                session.send("But I reserve the right to not use them, or to reword them slightly...");
-                HoldNext(session);
-            },
-            function (session, args, next) {
                 session.send("Okay! Let's start!");
                 session.userData.knowsAboutQuestions = true;
                 HoldDialog(session, "/questions/intro");

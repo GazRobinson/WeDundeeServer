@@ -52,7 +52,18 @@ var ref = db.ref("server/saving-data/questions");
 var secretsRef = db.ref("server/saving-data/responses/secret/answers");
 global.responseRef = db.ref("server/saving-data/responses");
 global.photoRef = db.ref("server/saving-data/images");
+
 LoadSecrets();
+LoadData();
+var chatCount = 7777;
+function LoadData(){
+	var dataRef = db.ref("server/bot-data/variables/chatCount");
+
+	dataRef.on("value", function(data) {
+		chatCount = data.val();
+	  });
+
+}
 
 const keyFilename="./wedundeebot-firebase-adminsdk-ibkp7-c6ba8d1dd7.json";
 const projectId = "wedundeebot"
@@ -200,7 +211,7 @@ bot.on('routing', function (session) {
 );
 bot.on('conversationUpdate', function (message) {
 	
-	if (message.membersAdded[0].name == "WeDundee") {
+	if ((message.membersAdded[0].name == "WeDundee"||message.membersAdded[0].name == "WeDundeeDev")) {
 		console.log("Set address");
 	//
 				console.log(message.address);
@@ -215,7 +226,7 @@ bot.on('conversationUpdate', function (message) {
 			} else {
 				var summary = dialogs.weather.GetCurrentWeather().summary.toLowerCase();
 				session.send({type: 'count',
-                text: "1337"})
+                text: chatCount})
 				//session.beginDialog('/intro/start');
 			}
 		});
@@ -290,6 +301,7 @@ global.saveLog = function (id) {
 				fs.unlink("./tmp/" + id, function () { console.log("Cleanup successful");});});
 		}	
 	}); 
+	delete chatlogs[id];
 }
 
 
@@ -441,35 +453,38 @@ bot.dialog('/confirmIdentity', [
 ]
 );
 
- //INTRO
-    bot.dialog('/intro',
-        [
-            function (session, args) {
-                session.beginDialog('/profile');
-            },
-			function (session, results, next) {
-				if (!session.userData.name) {
-					session.replaceDialog('/intro');
-					return;
-				}
-                if (session.userData.name.includes(" ")) {
-                    session.beginDialog("/intro/confirmName");
-				} else {
-                    next();
-                }
-            },
-			function (session, results, next) {
-				
+//INTRO
+bot.dialog('/intro',
+	[
+		function (session, args) {
+			chatCount++;
+			var dataRef = db.ref("server/bot-data/variables/chatCount");			
+			dataRef.set(chatCount);
+			session.beginDialog('/profile');
+		},
+		function (session, results, next) {
+			if (!session.userData.name) {
+				session.replaceDialog('/intro');
+				return;
+			}
+			if (session.userData.name.includes(" ")) {
+				session.beginDialog("/intro/confirmName");
+			} else {
+				next();
+			}
+		},
+		function (session, results, next) {			
 			session.conversationData.hello = true;
-                session.send('Great! Nice to meet you %s!', session.userData.name);
-				HoldDialog(session, '/beginning/intro');
-            }, function (session, args) {
-                console.log("end intro");
-                session.endDialog();
-            }
+			session.send('Great! Nice to meet you %s!', session.userData.name);
+			
+			HoldDialog(session, '/beginning/intro');
+		}, function (session, args) {
+			console.log("end intro");
+			session.endDialog();
+		}
 
-        ]
-    );
+	]
+);
 
 	
 

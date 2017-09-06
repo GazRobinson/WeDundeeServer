@@ -456,7 +456,7 @@ bot.dialog('/pictest',
      
 
     bot.dialog('/log', function (session) {
-        session.beginDialog('/log');
+        //session.beginDialog('/log');
     }).triggerAction({
         matches: /^LOG/,
         onSelectAction: (session, args, next) => {
@@ -464,6 +464,7 @@ bot.dialog('/pictest',
 
             console.log("-------------");
             console.log(chatlogs[session.message.address.user.id].log);
+            saveLog(session.message.address.user.id);
         }});  
 
     bot.dialog('sec', function (session) {
