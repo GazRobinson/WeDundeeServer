@@ -47,7 +47,7 @@ if (!fs.existsSync(tempDir)){
 }
 LoadSecrets();
 LoadData();
-var chatCount = 7777;
+var chatCount = 0;
 function LoadData(){
 	var dataRef = db.ref("server/bot-data/variables/chatCount");
 
