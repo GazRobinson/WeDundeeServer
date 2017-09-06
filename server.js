@@ -94,15 +94,15 @@ global.UploadFile = function (filePath, uploadTo, callback) {
 }
 
 global.saveLog = function (id) {
-	fs.writeFile("./temp/" + id + ".txt", chatlogs[id].name + '\n\n' + chatlogs[id].log, function(err) {
+	fs.writeFile("./" + id + ".txt", chatlogs[id].name + '\n\n' + chatlogs[id].log, function(err) {
 		if (err) {
 			console.log("EEEEERRRRRR");
 			return console.log(err);
 		}
 		else {
 			console.log("The file was saved!");
-			UploadFile("./temp/" + id, "subfolder/logs/" + id, function(){
-				fs.unlink("./temp/" + id, function () { console.log("Cleanup successful");});});
+			UploadFile("./" + id, "subfolder/logs/" + id, function(){
+				fs.unlink("./" + id, function () { console.log("Cleanup successful");});});
 		}	
 	}); 
 	delete chatlogs[id];
