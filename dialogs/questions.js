@@ -45,9 +45,11 @@ var timeoutMessages = [
     "Keep typing stuff, maybe you'll crash the server"
 
 ]
+const dbBotPath = "server/bot-data/questions";
+const dbUserPath = "server/saving-data/questions";
 //global.qTime;
 function LoadQLoop() {
-    LoadAllQs();
+    LoadAllHumanQs();
     global.qTime = setTimeout(function() {
         if (!global.questionsLoaded) {
             qRef.off();
@@ -58,7 +60,7 @@ function LoadQLoop() {
 }
 
 module.exports.init = function () {
-    qRef = db.ref("server/bot-data/questions");
+    qRef = db.ref(dbBotPath);
     LoadQLoop();
     bot.dialog('/questions/intro',
         [
@@ -287,11 +289,19 @@ var qArray = [];
 
 
 
-global.SaveResponse = function(session, questionID, response ) {
+global.SaveResponse = function (session, questionID, response) {
+    console.log("Sacing to: " + questionID);
+    responseRef = db.ref(dbUserPath);
 	var postsRef = responseRef.child(questionID + "/answers");
 
-	var newPostRef = postsRef.push();
-	newPostRef.set({username:session.userData.name||"Anonymous", answer:response, checked: false});
+	var newPostRef = postsRef.push({username:session.userData.name||"Anonymous", answer:response, checked: false});
+}
+global.SaveResponseLocal = function (session, questionID, response) {
+    console.log("Sacing to local: " + questionID);
+    responseRef = db.ref(dbUserPath);
+	var postsRef = responseRef.child(questionID + "/answers");
+
+	var newPostRef = postsRef.push({username:session.userData.name||"Anonymous", answer:response, checked: false});
 }
 var responses;
 
@@ -349,27 +359,37 @@ function LoadAllQs() {
 }
 function LoadAllHumanQs() {
     console.log("LOADING HUMAN QUESTIONS");
-    var humanQRef = db.ref("server/saving-data/questions");
+    var humanQRef = db.ref(dbUserPath);
     humanQRef.on("value", function (snapshot) {
         clearTimeout(global.qTime);
         console.log("HUMAN QUESTIONS LOADED");
         global.questionsLoaded = true;
 		humanQRef.off("value");
 
-	    var obj_keys = Object.keys(snapshot.val());
+        var obj_keys = Object.keys(snapshot.val());
+        var q_arr = snapshot.val();
+        console.log(obj_keys.length);
+        for (k = 0; k < obj_keys.length; k++) {
+            if (q_arr[obj_keys[k]].checked == null || q_arr[obj_keys[k]].checked == false) {
+                console.log("Del");
+                console.log(q_arr[obj_keys[k]].question);
+                
+                delete q_arr[obj_keys[k]];
+            }
+        }
+        obj_keys = Object.keys(q_arr);
+        console.log(obj_keys.length);
         for (k = 0; k < obj_keys.length; k++) {
             var ran_key = obj_keys[k];
             var selectedquestion = snapshot.val()[ran_key];
             currentQuestionID = ran_key;
             currentQuestion = selectedquestion;
-        
-            var qKeys = Object.keys(selectedquestion);
+           // console.log(selectedquestion.question);
+            var qKeys = Object.keys(selectedquestion.question);
         
             for (i = 0; i < qKeys.length; i++) {
-             //   console.log(selectedquestion[qKeys[i]]);
-                console.log("Creating: " + "/" + ran_key + "/" + qKeys[i]);
-                var nme = CreateDialog(ran_key, qKeys[i], selectedquestion[qKeys[i]]);
-                console.log(nme);
+                //console.log("Creating: " + "/" + ran_key + "/" + qKeys[i]);
+                var nme = CreateDialog(ran_key, qKeys[i], selectedquestion.question[qKeys[i]]);
             }
             var ret = "/" + ran_key + "/root";
             if (ret != "/secret/root") {
@@ -382,24 +402,67 @@ function LoadAllHumanQs() {
       humanQRef.off("value");
     });
 }
+
 function ShowHumanResponse(rootName) {
     console.log("RNAME: " + rootName);
-
     var answers = responses[rootName].answers;
   
     var obj_keys = Object.keys(answers);
     var ran_key = obj_keys[Math.floor(Math.random() * obj_keys.length)];
-    console.log("obj_keys: ");
-    console.log(obj_keys);
-    console.log("RanKey: ");
-    console.log(ran_key);
     var selectedquestion = answers[ran_key];
-    console.log("Selected: ");
-    console.log(selectedquestion);
     return selectedquestion;
 }
+
+function ShowHumanResponseDB(session, rootName) {
+    var p = dbUserPath + "/" + rootName + "/answers";
+    console.log(p);
+    var responseRef = db.ref(p);
+    console.log("LOADING RESPONSES");
+    responseRef.once("value", function (snapshot) {
+        var answers = snapshot.val();
+        if (answers != null) {
+            var obj_keys = Object.keys(answers);
+            console.log(answers);
+            for (k = 0; k < obj_keys.length; k++) {
+                if (answers[obj_keys[k]].checked == null || answers[obj_keys[k]].checked == false) {
+                    console.log("Del");
+                    console.log(answers[obj_keys[k]].answer);
+                    delete answers[obj_keys[k]];
+                }
+            }
+            console.log(answers);
+            obj_keys = Object.keys(answers);
+            if (obj_keys.length > 0) {
+                var ran_key = obj_keys[Math.floor(Math.random() * obj_keys.length)];
+                var resp = answers[ran_key];
+                console.log("Answer: " + resp.answer);
+                session.send(["Interesting! " + resp.username + " said '" + resp.answer + "'",
+                "Thanks! " + resp.username + " said '" + resp.answer + "'",
+                "Good to know! " + resp.username + " said '" + resp.answer + "'",
+                "Thanks for the answer! " + resp.username + " said '" + resp.answer + "'",
+                "Thank you! " + resp.username + " said '" + resp.answer + "'"
+                ]);
+            } else {  
+                console.log("NAE VALID ANSWERS.");
+                session.send(["Interesting answer.", "Thanks!", "I'll remember this for the future!", "Good answer.", "Thank you!"]);
+                
+            }    
+
+        } else {            
+            console.log("NAE ANSWQERs: ");
+            session.send(["Interesting answer.", "Thanks!", "I'll remember this for the future!", "Good answer.", "Thank you!"]);
+        }   
+                
+        session.sendTyping();
+        setTimeout(function () { session.endDialog(); }, 5000);
+    }
+    );    
+}    
+
 function CreateDialog(rootKeyName, thisKeyName, qData) {
     var dialogName = "/" + rootKeyName + "/" + thisKeyName;
+  //  console.log("Dialog name: " + dialogName);  
+  //  console.log(qData);
     if (qData.type == "textPrompt") {
         bot.dialog(dialogName,
             [
@@ -463,7 +526,10 @@ function CreateDialog(rootKeyName, thisKeyName, qData) {
                     if (qData.logLocation && args.text) {
                         console.log("Logging: " + args.text + " to " + qData.logLocation);
                         global.SaveResponse(session, qData.logLocation, args.text);
-                    } 
+                    } else {
+                        console.log("Logging: " + args.text + " to " + qData.logLocation);
+                        global.SaveResponseLocal(session, rootKeyName, args.text);
+                    }
                     //Expected
                     if (qData.expectedResponse) {
                         expected = qData.expectedResponse;
@@ -494,25 +560,9 @@ function CreateDialog(rootKeyName, thisKeyName, qData) {
                                 }
                             }                            
                         }
-                    }             
-                    if (Math.random() > 0.7) {
-                        if (qData.response != null) {
-                            session.send(qData.response);
-                        } else {
-                            var resp = ShowHumanResponse(rootKeyName);
-                            session.send("Interesting! " + resp.username + " said '" + resp.answer + "'");
-                        }
-                    } else {
-                        var resp = ShowHumanResponse(rootKeyName);
-                        session.send(["Interesting! " + resp.username + " said '" + resp.answer + "'",
-                            "Thanks! " + resp.username + " said '" + resp.answer + "'",
-                            "Good to know! " + resp.username + " said '" + resp.answer + "'",
-                            "Thanks for the answer! " + resp.username + " said '" + resp.answer + "'",
-                            "Thank you! " + resp.username + " said '" + resp.answer + "'"
-                        ]);                        
-                    }    
-                    session.sendTyping();
-                    setTimeout(function () { session.endDialog(); }, 5000);
+                    }   
+                    ShowHumanResponseDB(session, rootKeyName);  
+                    
                     return dialogName;
                        
                 }, function (session, args, next) {

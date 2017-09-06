@@ -43,7 +43,6 @@ global.idleTime = 5000;
 
 var ref = db.ref("server/saving-data/questions");
 var secretsRef = db.ref("server/saving-data/responses/secret/answers");
-global.responseRef = db.ref("server/saving-data/responses");
 global.photoRef = db.ref("server/saving-data/images");
 var tempDir = './temp';
 
