@@ -38,12 +38,8 @@ var mysql = require('mysql');
 var wordpress = require('wordpress');
 
 global.idleTime = 5000;
-
-
-
 var ref = db.ref("server/saving-data/questions");
 var secretsRef = db.ref("server/saving-data/responses/secret/answers");
-global.photoRef = db.ref("server/saving-data/images");
 var tempDir = './temp';
 
 if (!fs.existsSync(tempDir)){
@@ -276,6 +272,7 @@ bot.on('conversationUpdate', function (message) {
 			if (!session.conversationData.init) {
 				console.log("Set REAL address");
 				console.log(add);
+				IncreaseChatCount();
 				Init(session);
 
 				console.log(session.userData);
@@ -465,13 +462,17 @@ bot.dialog('/confirmIdentity', [
 ]
 );
 
+function IncreaseChatCount() {
+	console.log("Chat increase");
+	chatCount++;
+	var dataRef = db.ref("server/bot-data/variables/chatCount");			
+	dataRef.set(chatCount);
+}
+
 //INTRO
 bot.dialog('/intro',
 	[
-		function (session, args) {
-			chatCount++;
-			var dataRef = db.ref("server/bot-data/variables/chatCount");			
-			dataRef.set(chatCount);
+		function (session, args) {			
 			session.beginDialog('/profile');
 		},
 		function (session, results, next) {

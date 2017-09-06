@@ -21,10 +21,12 @@ sortArray = function (obj) {
 module.exports.init = function () {
     var imgRef = db.ref("server/saving-data/images");
     imgRef.once("value", function (snapshot) {
-        imgArray = sortArray(snapshot.val());
-        if (imgArray.length < 1) {
-            console.log("NAE IMAGES");
-        }
+        if (snapshot.val() != null) {
+            imgArray = sortArray(snapshot.val());
+            if (imgArray.length < 1) {
+                console.log("NAE IMAGES");
+            }
+        }    
     });
     
     bot.dialog('/showPicture', [function (session, args) {

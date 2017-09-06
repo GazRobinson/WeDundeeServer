@@ -179,7 +179,7 @@ module.exports = function () {
     );
 
     global.SavePicInfo = function(session, picDescription ) {
-        var postsRef = photoRef;
+        var postsRef = db.ref("server/saving-data/images");;
         postsRef.child(session.userData.uploadID).set({id:session.userData.uploadID, username:session.userData.name||"Anonymous", description:picDescription, checked: false, botImage: false});
     }
 
