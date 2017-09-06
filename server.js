@@ -36,18 +36,11 @@ require('./dialogs/intentManager.js')();
 require('./intents/questionFacilities.js')();
 var mysql = require('mysql');
 var wordpress = require('wordpress');
-var admin = require("firebase-admin");
-
-var serviceAccount = require("./wedundeebot-firebase-adminsdk-ibkp7-c6ba8d1dd7.json");
 
 global.idleTime = 5000;
 
-admin.initializeApp({
-	credential: admin.credential.cert(serviceAccount),
-	databaseURL: "https://wedundeebot.firebaseio.com"
-});
 
-module.exports.db = db = admin.database();
+
 var ref = db.ref("server/saving-data/questions");
 var secretsRef = db.ref("server/saving-data/responses/secret/answers");
 global.responseRef = db.ref("server/saving-data/responses");
@@ -208,15 +201,19 @@ var updateCount = 0;
 /////
 
 bot.on('incoming', function (message) {
+	console.log(message);
 	bot.loadSession(message.address, function (err, session) {
 	
 	if (message.attachments.length > 0) {
 		console.log("Got an attachment");
+		console.log(message.attachments[0]);
+		console.log(message.attachments[0].name);
 		download(message.attachments[0].contentUrl,
 			'temp'+message.address.conversation.id+'.png',
 			function () {
+				var filename = session.userData.uploadID;
 				console.log('done');
-				UploadFile('./temp' + message.address.conversation.id + '.png', "subfolder/images/" + message.address.conversation.id + ".png")
+				UploadFile('./temp' + message.address.conversation.id + '.png', "subfolder/images/" + filename + ".png")
 			}
 		);
 	}
@@ -915,7 +912,7 @@ function LoadSecrets() {
 		secretsRef.off("value");
 		global.realSecrets = snapshot.val();
 		
-		console.log(snapshot.val());
+		//console.log(snapshot.val());
 	}, function (errorObject) {
 		console.log("The read failed: " + errorObject.code);
 		secretsRef.off("value");

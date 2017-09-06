@@ -24,4 +24,12 @@ module.exports = function () {
     server.listen(process.env.port || 3978, function () {
         console.log('%s listening to %s', server.name, server.url);
     });
+
+    var admin = require("firebase-admin");
+    var serviceAccount = require("./wedundeebot-firebase-adminsdk-ibkp7-c6ba8d1dd7.json");
+    admin.initializeApp({
+        credential: admin.credential.cert(serviceAccount),
+        databaseURL: "https://wedundeebot.firebaseio.com"
+    });
+    module.exports.db = db = admin.database();
 }

@@ -1,67 +1,49 @@
 imageSearch = require('node-google-image-search');
+const path = "http://storage.googleapis.com/wedundeebot.appspot.com/subfolder%2Fimages%2F"
 
-const pics = [
-    'http://www.dundeepartnership.co.uk/sites/default/files/The%20Law_small%20%28crop%29.jpg',
-    'http://wedundeesite.azurewebsites.net/images/29141947776_ffed4483cc_k.jpg',
-    'http://wedundeesite.azurewebsites.net/images/29626893214_d842957ef7_k.jpg',
-    'http://wedundeesite.azurewebsites.net/images/31424155534_990c73f698_k.jpg',
-    'http://wedundeesite.azurewebsites.net/images/6275619791_4da79d3895_b.jpg',
-    'http://wedundeesite.azurewebsites.net/images/dundee_bridge.jpg',
-    'http://wedundeesite.azurewebsites.net/images/6276140800_b5ac9e3e89_b.jpg'
-];
+var imgArray;
+var imgRef;
+
 getPic = function () {    
-    return pics[Math.floor(Math.random() * pics.length)];
+    var selectedItem = imgArray[Math.floor(Math.random() * imgArray.length)];
+    return selectedItem;
 }
-defaultImageCallback = function (results) {
-    console.log(results);
-	var msg = new builder.Message().address(global.address);
-    msg.text('Here you go!');
-    msg.textLocale('en-US');
-	msg.addAttachment({
-		contentType: "image/jpeg",
-		contentUrl: getPic(),
-		name: "Law"
-	});
-	bot.send(msg);
-    setTimeout(function () {
-        currentSession.beginDialog("/displayPicture");
-        //bot.beginDialog(global.address, "*:/displayPicture");
-    }, 2500);
-    
+sortArray = function (obj) {    
+    var newArray = [];
+    var obj_keys = Object.keys(obj);
+    obj_keys.forEach(function (item) {
+        if (obj[item].checked == true) {
+            newArray.push(obj[item]);
+        }
+    });
+    return newArray;
 }
-
-nonDefaultImageCallback = function (results) {
-    console.log(results);
-	var msg = new builder.Message().address(global.address);
-    msg.text('Here you go!');
-    msg.textLocale('en-US');
-	msg.addAttachment({
-		contentType: "image/jpeg",
-		contentUrl: getPic(),
-		name: "Law"
-	});
-	bot.send(msg);    
-}
-
 module.exports.init = function () {
-
+    var imgRef = db.ref("server/saving-data/images");
+    imgRef.once("value", function (snapshot) {
+        imgArray = sortArray(snapshot.val());
+        if (imgArray.length < 1) {
+            console.log("NAE IMAGES");
+        }
+    });
+    
     bot.dialog('/showPicture', [function (session, args) {
         
-            session.send("Hold on a second while I grab one for you...");
-            console.log(session.dialogStack());
-        
-            setTimeout(function (session) {            
+        session.send("Hold on a second while I grab one for you...");
+        var imgInfo = getPic();
+        var txt = (imgInfo.botImage == null || imgInfo.botImage == false) ? "Here's one taken by " + imgInfo.username + "!\n They said '" + imgInfo.description + "'" : "Here’s a picture I took!\n " + imgInfo.description;
+        setTimeout(function (session) {            
             var results = imageSearch(
                 'Dundee',
                 function (results) {
                     console.log("RES");
                     console.log(session);
                     var msg = new builder.Message().address(session.message.address);
-                    msg.text('Here you go!');
+                    msg.text(txt);
                     msg.textLocale('en-US');
                     msg.addAttachment({
                         contentType: "image/jpeg",
-                        contentUrl: getPic(),
+                        contentUrl: path + imgInfo.id + ".png",
                         name: "Law"
                     });
                     bot.send(msg);

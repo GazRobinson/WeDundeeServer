@@ -167,6 +167,8 @@ module.exports = function () {
     bot.dialog('/uploadTest',
         function (session, args, next) {
             console.log("Upload test");
+            var d = new Date();
+            session.userData.uploadID = session.message.address.user.id + '_' + d.getTime();
             session.send({
                 type: 'uploadPrompt',
                 text: "Do"
@@ -178,14 +180,12 @@ module.exports = function () {
 
     global.SavePicInfo = function(session, picDescription ) {
         var postsRef = photoRef;
-    
-        var newPostRef = postsRef.push();
-        newPostRef.set({id:session.message.address.conversation.id, username:session.userData.name||"Anonymous", description:picDescription, checked: false});
+        postsRef.child(session.userData.uploadID).set({id:session.userData.uploadID, username:session.userData.name||"Anonymous", description:picDescription, checked: false, botImage: false});
     }
 
 bot.dialog('/pictest',
         function (session, args, next) {            
-            session.replaceDialog("/picture/picture");
+            session.replaceDialog("/uploadTest");
         }
         
 ).triggerAction({ matches: /^PICTEST/ });
@@ -215,7 +215,7 @@ bot.dialog('/pictest',
                 HoldNext(session);
             } else {
                 // Echo back users text
-                session.send("Please select a file to upload, or type 'cancel' if you've changed your mind.");
+              //  session.send("Please select a file to upload, or type 'cancel' if you've changed your mind.");
             }
         },
         function (session, args) {
@@ -468,7 +468,7 @@ bot.dialog('/pictest',
         }});  
 
     bot.dialog('sec', function (session) {
-        session.beginDialog('/secret/root');
+        session.beginDialog('/showPicture');
     }).triggerAction({ matches: /^FAME/ });  
 
     // RESET
