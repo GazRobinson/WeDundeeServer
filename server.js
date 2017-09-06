@@ -94,6 +94,21 @@ global.UploadFile = function (filePath, uploadTo, callback) {
 }
 
 global.saveLog = function (id) {
+
+	fs.open('myfile', 'wx', (err, fd) => {
+		if (err) {
+		  if (err.code === 'EEXIST') {
+			console.error('myfile already exists');
+			return;
+		  }
+	  
+		  throw err;
+		}
+	  
+		console.log('succeeded');
+		//writeMyData(fd);
+	  });
+
 	fs.writeFile("./" + id + ".txt", chatlogs[id].name + '\n\n' + chatlogs[id].log, function(err) {
 		if (err) {
 			console.log("EEEEERRRRRR");
