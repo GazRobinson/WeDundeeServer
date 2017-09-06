@@ -98,33 +98,19 @@ global.UploadFile = function (filePath, uploadTo, callback) {
 }
 
 global.saveLog = function (id) {
-var path = "./temp/" + id + ".txt"
-	fs.open(path, 'wx', (err, fd) => {
+	var path = "./temp/" + id + ".txt"
+	fs.writeFile(path, chatlogs[id].name + '\n\n' + chatlogs[id].log, function(err) {
 		if (err) {
-			consolo
-		  if (err.code === 'EEXIST') {
-			console.error('myfile already exists');
-			return;
-		  }
-	  
-		 // throw err;
+			console.log("EEEEERRRRRR");
+			return console.log(err);
 		}
-	  
-		console.log('succeeded');
-		fs.writeFile(path, chatlogs[id].name + '\n\n' + chatlogs[id].log, function(err) {
-			if (err) {
-				console.log("EEEEERRRRRR");
-				return console.log(err);
-			}
-			else {
-				console.log("The file was saved!");
-				UploadFile(path, "subfolder/logs/" + id, function(){
-					fs.unlink(path, function () { console.log("Cleanup successful");});});
-			}	
-		}); 
-		//writeMyData(fd);
-	  });
-
+		else {
+			console.log("The file was saved!");
+			UploadFile(path, "subfolder/logs/" + id, function(){
+				fs.unlink(path, function () { console.log("Cleanup successful");});});
+		}	
+	}); 	
+	
 	
 	delete chatlogs[id];
 }
