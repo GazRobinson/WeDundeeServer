@@ -214,6 +214,8 @@ bot.on('conversationUpdate', function (message) {
 					.text("Hello " + session.userData.name + ", it's so nice to see your face again."));
 			} else {
 				var summary = dialogs.weather.GetCurrentWeather().summary.toLowerCase();
+				session.send({type: 'count',
+                text: "1337"})
 				//session.beginDialog('/intro/start');
 			}
 		});
@@ -856,7 +858,7 @@ bot.dialog('/askQuestion', [
 bot.dialog('/quickAskQuestion', 
 	function (session, args) {
 		SaveQuestion(session.userData.name, args.text);
-		session.send("I'll save that one for later. Once I have more information I'll get back to you!");
+		session.send("I'll add that to my list. Once I have more information I'll get back to you!");
 		global.Wait(session, function () {
 			session.endDialog();
 		});
