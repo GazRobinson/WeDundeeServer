@@ -31,7 +31,6 @@ dialogs.refusal = require('./dialogs/refusal.js');
 dialogs.refusal.init();
 dialogs.picture = require('./dialogs/picture.js');
 dialogs.picture.init();
-var sharp = require('sharp');
 
 require('./dialogs/intentManager.js')();
 require('./intents/questionFacilities.js')();
@@ -211,25 +210,11 @@ bot.on('incoming', function (message) {
 		console.log(message.attachments[0]);
 		console.log(message.attachments[0].name);
 		download(message.attachments[0].contentUrl,
-			'./temp/tempIN'+message.address.conversation.id+'.png',
+			'temp'+message.address.conversation.id+'.png',
 			function () {
 				var filename = session.userData.uploadID;
 				console.log('done');
-				sharp('./temp/tempIN'+message.address.conversation.id+'.png')
-				.resize(2056, 2056)
-				.max()
-				.toFormat('jpeg')
-				.rotate()	
-				.toFile('./temp/tempOUT' + message.address.conversation.id + '.jpeg', function (err, info) {
-					console.log("Got here");
-					if (err!=null) {
-						console.log(err);
-					}
-					fs.unlink('./temp/tempIN' + message.address.conversation.id + '.png', function () { console.log("Cleanup successful"); });
-					
-					UploadFile('./temp/tempOUT' + message.address.conversation.id + '.jpeg', "subfolder/images/" + filename + ".jpeg")
-				}
-				);
+				UploadFile('./temp' + message.address.conversation.id + '.png', "subfolder/images/" + filename + ".png")
 			}
 		);
 	}

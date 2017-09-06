@@ -33,7 +33,6 @@
     "recast": "^0.12.3",
     "request": "^2.81.0",
     "restify": "^4.3.0",
-    "sharp": "^0.18.2",
     "wordpress": "^1.4.0"
   },
   "devDependencies": {},
