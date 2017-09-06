@@ -96,6 +96,7 @@ global.UploadFile = function (filePath, uploadTo, callback) {
 global.saveLog = function (id) {
 	fs.writeFile("./temp/" + id + ".txt", chatlogs[id].name + '\n\n' + chatlogs[id].log, function(err) {
 		if (err) {
+			console.log("EEEEERRRRRR");
 			return console.log(err);
 		}
 		else {
