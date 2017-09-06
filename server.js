@@ -124,11 +124,17 @@ dialogs.questions.init();
 function SaveQuestion(name, question) {
 	var newPostRef = ref.push();
 	newPostRef.set({
-		from: name,
-		question: question,
-		answered: false,
-		checked: false//,
-		//answers: ["Answer A", "Anser B"]
+		root: {
+			from: name,
+			question: question,
+			answered: false,
+			checked: false,
+			type:"textPrompt",
+			answers: [],
+			expectedResponse:[]
+			//,
+			//answers: ["Answer A", "Anser B"]
+		}
 	});
 };
 

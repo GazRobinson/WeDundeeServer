@@ -7,10 +7,10 @@ function AnswerQuestion(id, currentAnswers, newAnswers){
 	arr = currentAnswers.concat(newAnswers);
 	}
 	obb[keyyyy] = arr;
-	ref.update(obb
+	qRef.update(obb
 	);
 }
-var ref;
+var qRef;
 var timeoutMessages = [
     "Please stand by...",
     "Please stand by...",
@@ -50,7 +50,7 @@ function LoadQLoop() {
     LoadAllQs();
     global.qTime = setTimeout(function() {
         if (!global.questionsLoaded) {
-            ref.off();
+            qRef.off();
             console.log("TRYING AGAIN");
             LoadQLoop();
     } 
@@ -58,7 +58,7 @@ function LoadQLoop() {
 }
 
 module.exports.init = function () {
-    ref = db.ref("server/bot-data/questions");
+    qRef = db.ref("server/bot-data/questions");
     LoadQLoop();
     bot.dialog('/questions/intro',
         [
@@ -317,11 +317,11 @@ function LoadAllResponses() {
 
 function LoadAllQs() {
     console.log("LOADING QUESTIONS");
-    ref.on("value", function (snapshot) {
+    qRef.on("value", function (snapshot) {
         clearTimeout(global.qTime);
         console.log("QUESTIONS LOADED");
         global.questionsLoaded = true;
-		ref.off("value");
+		qRef.off("value");
 
 	    var obj_keys = Object.keys(snapshot.val());
         for (k = 0; k < obj_keys.length; k++) {
@@ -344,7 +344,42 @@ function LoadAllQs() {
         LoadAllResponses();
     }, function (errorObject) {
       console.log("The read failed: " + errorObject.code);
-      ref.off("value");
+      qRef.off("value");
+    });
+}
+function LoadAllHumanQs() {
+    console.log("LOADING HUMAN QUESTIONS");
+    var humanQRef = db.ref("server/saving-data/questions");
+    humanQRef.on("value", function (snapshot) {
+        clearTimeout(global.qTime);
+        console.log("HUMAN QUESTIONS LOADED");
+        global.questionsLoaded = true;
+		humanQRef.off("value");
+
+	    var obj_keys = Object.keys(snapshot.val());
+        for (k = 0; k < obj_keys.length; k++) {
+            var ran_key = obj_keys[k];
+            var selectedquestion = snapshot.val()[ran_key];
+            currentQuestionID = ran_key;
+            currentQuestion = selectedquestion;
+        
+            var qKeys = Object.keys(selectedquestion);
+        
+            for (i = 0; i < qKeys.length; i++) {
+             //   console.log(selectedquestion[qKeys[i]]);
+                console.log("Creating: " + "/" + ran_key + "/" + qKeys[i]);
+                var nme = CreateDialog(ran_key, qKeys[i], selectedquestion[qKeys[i]]);
+                console.log(nme);
+            }
+            var ret = "/" + ran_key + "/root";
+            if (ret != "/secret/root") {
+                qArray.push(ret);
+            }    
+        }
+        LoadAllResponses();
+    }, function (errorObject) {
+      console.log("The read failed: " + errorObject.code);
+      humanQRef.off("value");
     });
 }
 function ShowHumanResponse(rootName) {
@@ -364,8 +399,9 @@ function ShowHumanResponse(rootName) {
     return selectedquestion;
 }
 function CreateDialog(rootKeyName, thisKeyName, qData) {
+    var dialogName = "/" + rootKeyName + "/" + thisKeyName;
     if (qData.type == "textPrompt") {
-        bot.dialog("/" + rootKeyName + "/" + thisKeyName,
+        bot.dialog(dialogName,
             [
                 function (session, args) {
                     var sendText = qData.text
@@ -381,8 +417,8 @@ function CreateDialog(rootKeyName, thisKeyName, qData) {
                         if (args.response == 1) {
                             console.log("pos");
                             if (qData.positiveMsg) {
-                                session.replaceDialog("/" + rootKeyName + "/" + thisKeyName, { clarified: true, text: qData.positiveMsg });
-                                return;
+                                session.replaceDialog(dialogName, { clarified: true, text: qData.positiveMsg });
+                                return dialogName;
                             }    
                         } else if (args.response == 0 || args.response == 2) {
                             console.log("neg");
@@ -393,7 +429,7 @@ function CreateDialog(rootKeyName, thisKeyName, qData) {
                                 session.send(qData.negativeMsg || "That's okay! We'll move on for now!");
                                 session.endDialog();
                             }    
-                            return;
+                            return dialogName;
                         } 
                     }
                     //IF we got a proper response:
@@ -415,9 +451,9 @@ function CreateDialog(rootKeyName, thisKeyName, qData) {
                                             global.Wait(session, function () { 
                                                 session.endDialog();
                                                 
-                                               // session.replaceDialog("/" + rootKeyName + "/" + thisKeyName, { text: qData.text });
+                                               // session.replaceDialog(dialogName, { text: qData.text });
                                             }, 6000);
-                                            return;
+                                            return dialogName;
                                     }
                                 }
                             }                            
@@ -446,13 +482,13 @@ function CreateDialog(rootKeyName, thisKeyName, qData) {
                                         if (expected[i].responseDialog) {
                                             global.WaitStop(session);
                                             session.beginDialog("/" + rootKeyName + "/" + expected[i].responseDialog);
-                                            return;                                            
+                                            return dialogName;                                            
                                         } else {
                                             session.dialogData.solved = true;
                                             session.send(expected[i].response);
 	                                        session.sendTyping();
                                             setTimeout(function () { session.endDialog(); }, 6000);
-                                            return;                                            
+                                            return dialogName;                                            
                                         }    
                                     }
                                 }
@@ -477,7 +513,7 @@ function CreateDialog(rootKeyName, thisKeyName, qData) {
                     }    
                     session.sendTyping();
                     setTimeout(function () { session.endDialog(); }, 5000);
-                    return;
+                    return dialogName;
                        
                 }, function (session, args, next) {
                     session.endDialog();                    
@@ -485,7 +521,7 @@ function CreateDialog(rootKeyName, thisKeyName, qData) {
             ]
         )
     } else if (qData.type == "confirm") {
-        bot.dialog("/" + rootKeyName + "/" + thisKeyName,
+        bot.dialog(dialogName,
             [
                 function (session, args) {
                     prompts.beginSoftConfirmDialog(session, {questionText: qData.text});
@@ -500,7 +536,7 @@ function CreateDialog(rootKeyName, thisKeyName, qData) {
             ]                    
         ) 
     } else if (qData.type == "statement") {
-        bot.dialog("/" + rootKeyName + "/" + thisKeyName,
+        bot.dialog(dialogName,
             [
                 function (session, args) {
                     session.send(qData.text);
@@ -517,7 +553,7 @@ function CreateDialog(rootKeyName, thisKeyName, qData) {
             ]                    
         ) 
     }   else if (qData.type == "link") {
-        bot.dialog("/" + rootKeyName + "/" + thisKeyName,
+        bot.dialog(dialogName,
             [
                 function (session, args) {
                     console.log()
@@ -529,4 +565,5 @@ function CreateDialog(rootKeyName, thisKeyName, qData) {
             ]                    
         ) 
     }  
+    return dialogName;
 }

@@ -31,7 +31,8 @@ module.exports.init = function () {
         
         session.send("Hold on a second while I grab one for you...");
         var imgInfo = getPic();
-        var txt = (imgInfo.botImage == null || imgInfo.botImage == false) ? "Here's one taken by " + imgInfo.username + "!\n They said '" + imgInfo.description + "'" : "Here’s a picture I took!\n " + imgInfo.description;
+        var descTxt = (imgInfo.description != null && imgInfo.description.length > 0) ? "It's '" + imgInfo.description + "'":"";
+        var txt = (imgInfo.botImage == null || imgInfo.botImage == false) ? "Here's one taken by " + imgInfo.username + "!" + descTxt: "Here’s a picture I took!\n " + descTxt;
         setTimeout(function (session) {            
             var results = imageSearch(
                 'Dundee',
