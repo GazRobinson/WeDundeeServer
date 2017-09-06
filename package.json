@@ -1,6 +1,7 @@
 {
   "name": "wedundee",
   "version": "1.0.0",
+  "engines":{"node":"7.3.0"},
   "description": "A sample bot for getting started with Bot Framework",
   "main": "server.js",
   "scripts": {
