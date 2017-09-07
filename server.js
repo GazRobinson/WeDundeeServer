@@ -47,7 +47,7 @@ if (!fs.existsSync(tempDir)){
 }
 LoadSecrets();
 LoadData();
-var chatCount = 0;
+var chatCount = -1;
 function LoadData(){
 	var dataRef = db.ref("server/bot-data/variables/chatCount");
 
@@ -242,14 +242,16 @@ bot.on('conversationUpdate', function (message) {
 			
 			if (err)
 				console.log("ERR: " + err);
+
+			session.send({type: 'count',
+			text: chatCount})
 			if (session.userData.name) {
 				bot.send(new builder.Message()
 					.address(address)
 					.text("Hello " + session.userData.name + ", it's so nice to see your face again."));
 			} else {
 				var summary = dialogs.weather.GetCurrentWeather().summary.toLowerCase();
-				session.send({type: 'count',
-                text: chatCount})
+				
 				//session.beginDialog('/intro/start');
 			}
 		});
@@ -273,6 +275,8 @@ bot.on('conversationUpdate', function (message) {
 				console.log("Set REAL address");
 				console.log(add);
 				IncreaseChatCount();
+				session.send({type: 'count',
+                text: chatCount})
 				Init(session);
 
 				console.log(session.userData);
