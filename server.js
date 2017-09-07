@@ -91,7 +91,7 @@ global.saveLog = function (id) {
 	var n = d.toDateString();
 	var t = d.toTimeString();
 
-	var path = "./temp/" + id + ".txt"
+	var path = "./temp/" + id + ".txt";
 	fs.writeFile(path, chatlogs[id].name + " - " + n + " - " + t + '\n\n' + chatlogs[id].log, function(err) {
 		if (err) {
 			console.log("EEEEERRRRRR");
@@ -99,7 +99,7 @@ global.saveLog = function (id) {
 		}
 		else {
 			console.log("The file was saved!");
-			UploadFile(path, "subfolder/logs/" + id, function(){
+			UploadFile(path, "subfolder/logs/" + id + ".txt", function(){
 				fs.unlink(path, function () { console.log("Cleanup successful");});});
 		}	
 	}); 	
