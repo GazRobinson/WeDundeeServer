@@ -47,6 +47,7 @@ var timeoutMessages = [
 ]
 const dbBotPath = "server/bot-data/questions";
 const dbUserPath = "server/saving-data/questions";
+const dbFeedbackPath = "server/saving-data/feedback";
 //global.qTime;
 function LoadQLoop() {
     LoadAllHumanQs();
@@ -286,7 +287,6 @@ module.exports.init = function () {
     );
 }
 var qArray = [];
-
 
 
 global.SaveResponse = function (session, questionID, response) {
@@ -563,7 +563,13 @@ function CreateDialog(rootKeyName, thisKeyName, qData) {
                             }                            
                         }
                     }   
-                    ShowHumanResponseDB(session, rootKeyName);  
+                    if (rootKeyName != "secret") {
+                        ShowHumanResponseDB(session, rootKeyName);
+                    } else {
+                        console.log("Skipping for secret");
+                        session.sendTyping();
+                        setTimeout(function () { session.endDialog(); }, 5000);
+                    }    
                     
                     return dialogName;
                        

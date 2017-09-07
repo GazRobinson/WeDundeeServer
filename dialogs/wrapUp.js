@@ -32,6 +32,7 @@ module.exports.init = function () {
         function (session, args, next) {
             session.userData.completed = true;
             global.saveLog(session.message.address.user.id);
+            SaveFeedback(session, args.text);
             session.send("Thank you and goodbye!");
             session.endDialog();
         }
@@ -50,4 +51,11 @@ module.exports.init = function () {
             session.endDialog();
         }      
     ]);
+}
+
+const dbFeedbackPath = "server/saving-data/feedback";
+global.SaveFeedback = function (session, feedback) {
+    var fbRef = db.ref(dbFeedbackPath);
+
+	fbRef.push({username:session.userData.name||"Anonymous", answer:feedback, checked: false});
 }

@@ -39,7 +39,7 @@ var wordpress = require('wordpress');
 
 global.idleTime = 5000;
 var ref = db.ref("server/saving-data/questions");
-var secretsRef = db.ref("server/saving-data/responses/secret/answers");
+var secretsRef = db.ref("server/saving-data/questions/secret/answers");
 var tempDir = './temp';
 
 if (!fs.existsSync(tempDir)){
@@ -119,17 +119,19 @@ dialogs.questions.init();
 function SaveQuestion(name, question) {
 	var newPostRef = ref.push();
 	newPostRef.set({
-		root: {
-			from: name,
-			question: question,
-			answered: false,
-			checked: false,
-			type:"textPrompt",
-			answers: [],
-			expectedResponse:[]
-			//,
-			//answers: ["Answer A", "Anser B"]
-		}
+		question: {
+			root: {
+				from: name,
+				text: question,
+				answered: false,
+				type: "textPrompt",
+				expectedResponse: []
+				//,
+				//answers: ["Answer A", "Anser B"]
+			}
+		},
+		answers: [],
+		checked: false
 	});
 };
 
@@ -921,7 +923,20 @@ function LoadSecrets() {
 		console.log("Secrets loaded!");
 		secretsRef.off("value");
 		global.realSecrets = snapshot.val();
-		
+
+
+		var obj_keys = Object.keys(realSecrets);
+		console.log(realSecrets);
+		for (k = 0; k < obj_keys.length; k++) {
+			if (realSecrets[obj_keys[k]].checked == null || realSecrets[obj_keys[k]].checked == false) {
+				console.log("Del secret");
+				console.log(realSecrets[obj_keys[k]].answer);
+				delete realSecrets[obj_keys[k]];
+			}
+		}
+		console.log(realSecrets);
+		obj_keys = Object.keys(realSecrets);
+				
 		//console.log(snapshot.val());
 	}, function (errorObject) {
 		console.log("The read failed: " + errorObject.code);
@@ -929,18 +944,26 @@ function LoadSecrets() {
 	});
 }
 function GetSecret(obj) {
-	var obj_key = Object.keys(obj);
-	console.log(obj_key);
-	return obj[obj_key[Math.floor(Math.random() * obj_key.length)]];
+	console.log(realSecrets);
+	var obj_key = Object.keys(realSecrets);
+	if (realSecrets != null && obj_key.length > 0) {
+		var obj_key = Object.keys(obj);
+		console.log(obj_key);
+		return obj[obj_key[Math.floor(Math.random() * obj_key.length)]].answer;
+	} else {
+		console.log("No valid secrets");
+		return secretss[Math.floor(Math.random() * secretss.length)]
+	}	
 }
 bot.dialog('/loadSecret', [
 	function (session, args) {
 		session.conversationData.heardSecret = true;
-		if (realSecrets) {
+		session.send(GetSecret(realSecrets));
+		/*if (realSecrets) {
 			session.send(GetSecret(realSecrets).answer);
 		} else {
 			session.send(secretss[Math.floor(Math.random() * secretss.length)]);
-		}	
+		}	*/
 		global.Wait(session, function () {
 			session.sendTyping();
 			console.log("endSecret");

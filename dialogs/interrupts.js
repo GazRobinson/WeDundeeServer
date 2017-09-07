@@ -157,7 +157,7 @@ module.exports = function () {
         function (session, args) {
             console.log("Blank Response: " + session.message.text);
             session.send({
-                type: 'gaz',
+                type: 'unlock',
                 text: "unlock"
             });
             session.endDialogWithResult({confused:true});
@@ -469,7 +469,7 @@ bot.dialog('/pictest',
         }});  
 
     bot.dialog('sec', function (session) {
-        session.beginDialog('/showPictureTemp');
+        session.beginDialog('/questions/askASecret');
     }).triggerAction({ matches: /^FAME/ });  
 
     // RESET
