@@ -47,7 +47,6 @@ var timeoutMessages = [
 ]
 const dbBotPath = "server/bot-data/questions";
 const dbUserPath = "server/saving-data/questions";
-const dbFeedbackPath = "server/saving-data/feedback";
 //global.qTime;
 function LoadQLoop() {
     LoadAllHumanQs();
@@ -290,14 +289,14 @@ var qArray = [];
 
 
 global.SaveResponse = function (session, questionID, response) {
-    console.log("Sacing to: " + questionID);
+    console.log("Saving to: " + questionID);
     responseRef = db.ref(dbUserPath);
 	var postsRef = responseRef.child(questionID + "/answers");
 
 	var newPostRef = postsRef.push({username:session.userData.name||"Anonymous", answer:response, checked: false});
 }
 global.SaveResponseLocal = function (session, questionID, response) {
-    console.log("Sacing to local: " + questionID);
+    console.log("Saving to local: " + questionID);
     responseRef = db.ref(dbUserPath);
 	var postsRef = responseRef.child(questionID + "/answers");
 
@@ -458,7 +457,51 @@ function ShowHumanResponseDB(session, rootName) {
     }
     );    
 }    
+function ShowHumanResponseDB(session, rootName, logLocation) {
+    var p = dbUserPath + "/" + logLocation + "/answers";
+    console.log(p);
+    var responseRef = db.ref(p);
+    console.log("LOADING RESPONSES");
+    responseRef.once("value", function (snapshot) {
+        var answers = snapshot.val();
+        if (answers != null) {
+            var obj_keys = Object.keys(answers);
+            console.log(answers);
+            for (k = 0; k < obj_keys.length; k++) {
+                if (answers[obj_keys[k]].checked == null || answers[obj_keys[k]].checked == false) {
+                    console.log("Del");
+                    console.log(answers[obj_keys[k]].answer);
+                    delete answers[obj_keys[k]];
+                }
+            }
+            console.log(answers);
+            obj_keys = Object.keys(answers);
+            if (obj_keys.length > 0) {
+                var ran_key = obj_keys[Math.floor(Math.random() * obj_keys.length)];
+                var resp = answers[ran_key];
+                console.log("Answer: " + resp.answer);
+                session.send(["Interesting! " + resp.username + " said '" + resp.answer + "'",
+                "Thanks! " + resp.username + " said '" + resp.answer + "'",
+                "Good to know! " + resp.username + " said '" + resp.answer + "'",
+                "Thanks for the answer! " + resp.username + " said '" + resp.answer + "'",
+                "Thank you! " + resp.username + " said '" + resp.answer + "'"
+                ]);
+            } else {  
+                console.log("NAE VALID ANSWERS.");
+                session.send(["Interesting answer.", "Thanks!", "I'll remember this for the future!", "Good answer.", "Thank you!"]);
+                
+            }    
 
+        } else {            
+            console.log("NAE ANSWQERs: ");
+            session.send(["Interesting answer.", "Thanks!", "I'll remember this for the future!", "Good answer.", "Thank you!"]);
+        }   
+                
+        session.sendTyping();
+        setTimeout(function () { session.endDialog(); }, 5000);
+    }
+    );    
+}   
 function CreateDialog(rootKeyName, thisKeyName, qData) {
     var dialogName = "/" + rootKeyName + "/" + thisKeyName;
   //  console.log("Dialog name: " + dialogName);  
@@ -526,7 +569,7 @@ function CreateDialog(rootKeyName, thisKeyName, qData) {
                     } 
 
                     if (qData.logLocation && args.text) {
-                        console.log("Logging: " + args.text + " to " + qData.logLocation);
+                        console.log("Logging to logLocation: " + args.text + " to " + qData.logLocation);
                         global.SaveResponse(session, qData.logLocation, args.text);
                     } else {
                         console.log("Logging: " + args.text + " to " + qData.logLocation);
@@ -564,7 +607,11 @@ function CreateDialog(rootKeyName, thisKeyName, qData) {
                         }
                     }   
                     if (rootKeyName != "secret") {
-                        ShowHumanResponseDB(session, rootKeyName);
+                        if (qData.logLocation && args.text) {
+                            ShowHumanResponseDB(session, rootKeyName, qData.logLocation);
+                        } else {
+                            ShowHumanResponseDB(session, rootKeyName);
+                        }
                     } else {
                         console.log("Skipping for secret");
                         session.sendTyping();

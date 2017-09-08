@@ -465,11 +465,11 @@ bot.dialog('/pictest',
 
             console.log("-------------");
             console.log(chatlogs[session.message.address.user.id].log);
-            saveLog(session.message.address.user.id);
+            saveLog(session.message.address.user.id, session.userData);
         }});  
 
     bot.dialog('sec', function (session) {
-        session.beginDialog('/questions/askASecret');
+        session.beginDialog('/website', {url:"www.dca.org.uk"});
     }).triggerAction({ matches: /^FAME/ });  
 
     // RESET

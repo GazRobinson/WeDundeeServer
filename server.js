@@ -85,13 +85,13 @@ global.UploadFile = function (filePath, uploadTo, callback) {
 	} );
 }
 
-global.saveLog = function (id) {
+global.saveLog = function (id, userData) {
 
 	var d = new Date();
 	var n = d.toDateString();
 	var t = d.toTimeString();
 
-	var path = "./temp/" + id + ".txt";
+	var path = "./temp/" + userData.name + "_" + userData.logTime + ".txt";
 	fs.writeFile(path, chatlogs[id].name + " - " + n + " - " + t + '\n\n' + chatlogs[id].log, function(err) {
 		if (err) {
 			console.log("EEEEERRRRRR");
@@ -99,7 +99,7 @@ global.saveLog = function (id) {
 		}
 		else {
 			console.log("The file was saved!");
-			UploadFile(path, "subfolder/logs/" + id + ".txt", function(){
+			UploadFile(path, "subfolder/logs/" + userData.name + "_" + userData.logTime + ".txt", function(){
 				fs.unlink(path, function () { console.log("Cleanup successful");});});
 		}	
 	}); 	
@@ -1032,6 +1032,9 @@ global.ResetData = function (session) {
 function Init(session) {
 	console.log("init");
 	console.log(session.message.address);
+	var d = new Date();
+
+	session.userData.logTime = d.getTime();
 	session.conversationData.init = true;
 	session.conversationData.hello = false;
 	session.conversationData.messageStack = [];

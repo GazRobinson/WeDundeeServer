@@ -32,7 +32,7 @@ module.exports.init = function () {
         },
         function (session, args, next) {
             session.userData.completed = true;
-            global.saveLog(session.message.address.user.id);
+            global.saveLog(session.message.address.user.id, session.userData);
             SaveFeedback(session, args.text);
             session.send("Thank you and goodbye!");
             session.endDialog();
