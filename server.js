@@ -470,9 +470,11 @@ bot.dialog('/confirmIdentity', [
 
 function IncreaseChatCount() {
 	console.log("Chat increase");
-	chatCount++;
-	var dataRef = db.ref("server/bot-data/variables/chatCount");			
-	dataRef.set(chatCount);
+	if (chatCount > 5) {
+		chatCount++;
+		var dataRef = db.ref("server/bot-data/variables/chatCount");
+		dataRef.set(chatCount);
+	}	
 }
 
 //INTRO

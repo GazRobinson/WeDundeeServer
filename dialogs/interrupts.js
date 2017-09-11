@@ -180,7 +180,9 @@ module.exports = function () {
 
     global.SavePicInfo = function(session, picDescription ) {
         var postsRef = db.ref("server/saving-data/images");;
-        postsRef.child(session.userData.uploadID).set({id:session.userData.uploadID, username:session.userData.name||"Anonymous", description:picDescription, checked: false, botImage: false});
+        postsRef.child(session.userData.uploadID).set({
+            id: session.userData.uploadID, username: session.userData.name || "Anonymous", description: picDescription, checked: false, botImage: false,
+        link: "http://storage.googleapis.com/wedundeebot.appspot.com/subfolder/images/" + id});
     }
 
 bot.dialog('/pictest',

@@ -125,7 +125,7 @@ module.exports.init = function () {
                         return;
                 }
                 if (session.userData.questionCount < 3) {
-                    session.send(["Next up...", "The next one is...", "All right, next question", "Time for another one", "What was next...? Oh yeah!",  "Oh this is a good one!", "This one has got some good responses!", "This is a favourite of mine!"]);
+                    session.send(["Next up...", "The next one is...", "All right, next question", "Time for another one", "What was next...? Oh yeah!",  "Oh this is a good one!", "This next question has some good responses", "This is a favourite of mine!"]);
                     global.HoldReplace(session, "/questions/intro", 5000);
                     //global.Wait(session, function () { session.replaceDialog("/questions/intro"); }, 4000);
                 } else {
@@ -514,6 +514,9 @@ function CreateDialog(rootKeyName, thisKeyName, qData) {
                     if (args && args.clarified) {
                         sendText = args.text;                        
                     }    
+                    if (qData.from != null) {
+                        sendText = qData.from + " asked '" + sendText + "'";
+                    }
                     prompts.beginMultiDialog(session, {text:sendText});
                 }, 
                 function (session, args) {
