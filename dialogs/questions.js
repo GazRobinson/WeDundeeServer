@@ -610,10 +610,10 @@ function CreateDialog(rootKeyName, thisKeyName, qData) {
                         }
                     }   
                     if (rootKeyName != "secret") {
-                        if (qData.logLocation && args.text) {
+                        if (qData.logLocation != null && args.text) {
                             ShowHumanResponseDB(session, rootKeyName, qData.logLocation);
                         } else {
-                            ShowHumanResponseDB(session, rootKeyName);
+                            ShowHumanResponseDB(session, rootKeyName, rootKeyName);
                         }
                     } else {
                         console.log("Skipping for secret");

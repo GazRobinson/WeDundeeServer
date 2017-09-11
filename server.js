@@ -48,11 +48,13 @@ if (!fs.existsSync(tempDir)){
 LoadSecrets();
 LoadData();
 var chatCount = -1;
+var countLoaded = false;
 function LoadData(){
 	var dataRef = db.ref("server/bot-data/variables/chatCount");
 
 	dataRef.on("value", function(data) {
 		chatCount = data.val();
+		countLoaded = true;
 	  });
 
 }
@@ -470,7 +472,7 @@ bot.dialog('/confirmIdentity', [
 
 function IncreaseChatCount() {
 	console.log("Chat increase");
-	if (chatCount > 5) {
+	if (countLoaded) {
 		chatCount++;
 		var dataRef = db.ref("server/bot-data/variables/chatCount");
 		dataRef.set(chatCount);
