@@ -515,7 +515,7 @@ function CreateDialog(rootKeyName, thisKeyName, qData) {
                         sendText = args.text;                        
                     }    
                     if (qData.from != null) {
-                        sendText = qData.from + " asked '" + sendText + "'";
+                        sendText = qData.from + " asks '" + sendText + "'";
                     }
                     prompts.beginMultiDialog(session, {text:sendText});
                 }, 
