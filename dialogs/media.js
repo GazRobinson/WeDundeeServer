@@ -34,7 +34,7 @@ module.exports.init = function () {
         session.send("Hold on a second while I grab one for you...");
         var imgInfo = getPic();
         var descTxt = (imgInfo.description != null && imgInfo.description.length > 0) ? "It's '" + imgInfo.description + "'":"";
-        var txt = (imgInfo.botImage == null || imgInfo.botImage == false) ? "Here's one taken by " + imgInfo.username + "!" + descTxt: "Here’s a picture I took!\n " + descTxt;
+        var txt = (imgInfo.botImage == null || imgInfo.botImage == false) ? "Here's one taken by " + imgInfo.username + "! " + descTxt: "Here’s a picture I took!\n " + descTxt;
         setTimeout(function (session) {            
             var results = imageSearch(
                 'Dundee',
@@ -46,7 +46,7 @@ module.exports.init = function () {
                     msg.textLocale('en-US');
                     msg.addAttachment({
                         contentType: "image/jpeg",
-                        contentUrl: path + imgInfo.id + ".jpeg",
+                        contentUrl: imgInfo.link,
                         name: "Law"
                     });
                     bot.send(msg);
@@ -62,39 +62,7 @@ module.exports.init = function () {
         }
     ]
     );  
-    bot.dialog('/showPictureTemp', [function (session, args) {
-        
-        session.send("Hold on a second while I grab one for you...");
-        var imgInfo = getPic();
-        var descTxt = (imgInfo.description != null && imgInfo.description.length > 0) ? "It's '" + imgInfo.description + "'":"";
-        var txt = (imgInfo.botImage == null || imgInfo.botImage == false) ? "Here's one taken by " + imgInfo.username + "!" + descTxt: "Here’s a picture I took!\n " + descTxt;
-        setTimeout(function (session) {            
-            var results = imageSearch(
-                'Dundee',
-                function (results) {
-                    console.log("RES");
-                    console.log(session);
-                    var msg = new builder.Message().address(session.message.address);
-                    msg.text(txt);
-                    msg.textLocale('en-US');
-                    msg.addAttachment({
-                        contentType: "image/jpeg",
-                        contentUrl: path + "395db6ef-455f-4e92-b4f7-22d8be05df1d_1504736680134.png",
-                        name: "Law"
-                    });
-                    bot.send(msg);
-                    session.beginDialog("/displayPicture");
-                }, 0, 1
-                );
-        }, 5000, session);	                  
-        },
-        function (session, args) {
-            setTimeout(function () {
-                session.endDialog();
-            }, 5000);
-        }
-    ]
-    );  
+     
     bot.dialog('/media/requestPicture', [
         function (session, args) {            
             var results = imageSearch(
