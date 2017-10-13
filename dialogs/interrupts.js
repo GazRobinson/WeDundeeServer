@@ -171,7 +171,7 @@ module.exports = function () {
             session.userData.uploadID = session.userData.name + '_' + d.getTime();
             session.send({
                 type: 'uploadPrompt',
-                text: "Do"
+                text: "Please select a file to upload or type 'cancel' if you've changed your mind."
             });
             session.replaceDialog("/doUploadStuff");
         }
